@@ -14,18 +14,20 @@ import retrofit2.http.Multipart
 import retrofit2.http.Part
 
 interface ApiService {
+
+    // GET to get the user's task list
     @GET("api/usertask")
     suspend fun getUserTasks(): List<UserTask>
 
-    //
+    // POST to create a new task
     @POST("api/usertask")
     suspend fun addUserTask(@Body userTask: UserTask): UserTask
 
-
-    //
+    // PUT to update an existing task by ID
     @PUT("api/usertask/{id}")
     suspend fun updateUserTask(@Path("id") id: Int, @Body userTask: UserTask): UserTask
 
+    // DELETE to delete a task by ID
     @DELETE("api/usertask/{id}") suspend fun deleteUserTask(@Path("id") id: Int): Response<Unit>
 
 }
