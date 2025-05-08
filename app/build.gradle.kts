@@ -76,4 +76,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
 }

@@ -1,4 +1,5 @@
 package com.moviles.yetify
+
 import androidx.activity.enableEdgeToEdge
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,8 +21,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             YetifyTheme {
-                AppNavigation()
-
+                YetifyApp()
             }
         }
     }
