@@ -1,4 +1,7 @@
 package com.moviles.yetify.network
+import com.moviles.yetify.models.LoginApiResponse
+import com.moviles.yetify.models.LoginRequest
+import com.moviles.yetify.models.LoginResponse
 import com.moviles.yetify.models.UserTask
 import retrofit2.Response
 import retrofit2.http.Body
@@ -30,4 +33,6 @@ interface ApiService {
     // DELETE to delete a task by ID
     @DELETE("api/usertask/{id}") suspend fun deleteUserTask(@Path("id") id: Int): Response<Unit>
 
+    @POST("/api/Auth/Login")
+    suspend fun login(@Body request: LoginRequest): Response<LoginApiResponse>
 }
