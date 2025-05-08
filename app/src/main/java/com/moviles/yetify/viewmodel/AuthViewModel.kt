@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.moviles.yetify.datastore.UserPreferences
 import com.moviles.yetify.models.LoginApiResponse
 import com.moviles.yetify.models.LoginRequest
 import com.moviles.yetify.models.LoginResponse
@@ -33,6 +34,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     var userId: Int? = null
 
+    private val prefs = UserPreferences(application.applicationContext)
+
     sealed class LoginResult {
         object Idle : LoginResult()
         object Loading : LoginResult()
@@ -54,6 +57,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                         userId = user.id
                         isAuthenticated = true
+                        prefs.saveUser(user.id, user.token)
                         _loginResult.value = LoginResult.Success(user)
 
                         Log.i("AuthViewModel", "Login success. User: $user")
