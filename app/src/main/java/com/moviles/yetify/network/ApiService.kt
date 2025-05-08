@@ -19,19 +19,24 @@ import retrofit2.http.Part
 interface ApiService {
 
     // GET to get the user's task list
-    @GET("api/usertask")
+    @GET("api/UserTask")
     suspend fun getUserTasks(): List<UserTask>
 
+
+    @GET("api/UserTask/user/{userId}")
+    suspend fun getUserTasksByUserId(@Path("userId") userId: Int): List<UserTask>
+
+
     // POST to create a new task
-    @POST("api/usertask")
+    @POST("api/UserTask")
     suspend fun addUserTask(@Body userTask: UserTask): UserTask
 
     // PUT to update an existing task by ID
-    @PUT("api/usertask/{id}")
+    @PUT("api/UserTask/{id}")
     suspend fun updateUserTask(@Path("id") id: Int, @Body userTask: UserTask): UserTask
 
     // DELETE to delete a task by ID
-    @DELETE("api/usertask/{id}") suspend fun deleteUserTask(@Path("id") id: Int): Response<Unit>
+    @DELETE("api/UserTask/{id}") suspend fun deleteUserTask(@Path("id") id: Int): Response<Unit>
 
     @POST("/api/Auth/Login")
     suspend fun login(@Body request: LoginRequest): Response<LoginApiResponse>
