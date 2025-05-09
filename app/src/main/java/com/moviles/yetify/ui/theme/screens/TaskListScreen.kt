@@ -334,6 +334,7 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
     var dueDate by remember { mutableStateOf(TextFieldValue(task?.dueDate ?: "")) }
     var status by remember { mutableStateOf(TextFieldValue(task?.status ?: "")) }
     var showDatePicker by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     var datePickerState = rememberDatePickerState()
 
     if (showDatePicker) {
@@ -377,11 +378,23 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
                 TaskField( label = "Estado", placeholder = "Estado", value = status,
                     onValueChange = { status = it }, icon = Icons.Default.Info,)
 
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = Color.Yellow,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center){
                     Button(
                         onClick = {
+                            if (description.text.isBlank() || dueDate.text.isBlank() || status.text.isBlank()) {
+                                errorMessage = "Todos los campos son obligatorios"
+                                return@Button
+                            }
                             var usertask =UserTask(id = task?.id,
                                 idUser = task?.idUser,
                                 idCourse = task?.idCourse,
