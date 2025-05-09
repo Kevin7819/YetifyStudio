@@ -132,8 +132,11 @@ class UserTaskViewModel (application: Application) : AndroidViewModel(applicatio
     fun updateUserTask(userTask: UserTask){
         viewModelScope.launch {
             try {
-                Log.i("ViewModelInfo", "UserTask: ${userTask}")
-                val response = RetrofitInstance.api.updateUserTask(userTask.id, userTask)
+                Log.i("ViewModelInfo 135", "UserTask: ${userTask}")
+                if (userTask.id == null) {
+                    throw IllegalArgumentException("El ID del UserTask no puede ser nulo")
+                }
+                val response = RetrofitInstance.api.updateUserTask(userTask?.id, userTask)
                 _userTasks.value = _userTasks.value.map { userTask ->
                     if (userTask.id == response.id) response else userTask
                 }

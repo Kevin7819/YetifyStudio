@@ -41,7 +41,7 @@ interface ApiService {
 
     // PUT to update an existing task by ID
     @PUT("api/UserTask/{id}")
-    suspend fun updateUserTask(@Path("id") id: Int, @Body userTask: UserTask): UserTask
+    suspend fun updateUserTask(@Path("id") id: Int?, @Body userTask: UserTask): UserTask
 
     // DELETE to delete a task by ID
     @DELETE("api/UserTask/{id}") suspend fun deleteUserTask(@Path("id") id: Int): Response<Unit>
