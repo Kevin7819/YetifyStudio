@@ -3,6 +3,11 @@ package com.moviles.yetify.ui.theme.screens
 
 import android.icu.text.SimpleDateFormat
 import android.util.Log
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -59,6 +64,37 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.navigation.compose.rememberNavController
+
+
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.random.Random
+
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.math.cos
 
 
 @Composable
@@ -67,6 +103,8 @@ fun TaskListScreen(navController: NavController) {
     val userTasks by viewModel.userTasks.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var taskSelected by remember { mutableStateOf<UserTask?>(null) }
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val snowflakes = remember { List(15) { createSnowflaketask(screenWidth.value) } }
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserTasks()
@@ -77,163 +115,343 @@ fun TaskListScreen(navController: NavController) {
             .fillMaxSize()
             .background(Color.White)
     ) {
+        // Clouds
+        CloudBackground()
 
+        // snowflakes
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(80.dp)
-                .align(Alignment.BottomCenter)
-                .background(Color(0xFF59C0EF))
+                .height(100.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF59C0EF))
-                )
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF59C0EF))
-                )
+            snowflakes.forEach { snowflake ->
+                FallingSnowflaketask(snowflaketask = snowflake)
             }
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 24.dp, top = 16.dp)
-            ) {
-                Text(
-                    text = "Lista de tareas",
-                    color = Color.White,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Lista de tareas",
-                    tint = Color.White,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-
-            Row(
+            // Eaimation snowflakes
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Descripción",
-                    color =Color(0xFF59C0EF),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                Text(
-                    text = "Estado",
-                    color = Color(0xFF59C0EF),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(80.dp)
-                )
-                Text(
-                    text = "Editar/\nEliminar",
-                    color = Color(0xFF59C0EF),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.width(80.dp)
-                )
-            }
-
-
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(userTasks) { task ->
-                    TaskItem(
-                        task = task,
-                        onDelete = { viewModel.deleteUserTask(it) },
-                        onEdit = {
-                            showDialog = true
-                            taskSelected = task
-                        }
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = { navController.popBackStack() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF59C0EF))
+                    .height(100.dp)
+                    .background(Color(0xFF59C0EF).copy(alpha = 0.9f)),
+                contentAlignment = Alignment.Center
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
+                    Text(
+                        text = "Lista de tareas",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 8.dp)
                     )
 
-                    Text(
-                        text = "Volver",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(start = 8.dp)
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Lista de tareas",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
 
 
-            if (showDialog){
-                DialogEditTaskUser(task = taskSelected, onConfirm = { usertasks->
-                    if(taskSelected != null){
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Descripción",
+                        color = Color(0xFF59C0EF),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "Estado",
+                        color = Color(0xFF59C0EF),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(80.dp)
+                    )
+                    Text(
+                        text = "Editar/\nEliminar",
+                        color = Color(0xFF59C0EF),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(80.dp)
+                    )
+                }
+
+                // List Task
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(userTasks) { task ->
+                        TaskItem(
+                            task = task,
+                            onDelete = { viewModel.deleteUserTask(it) },
+                            onEdit = {
+                                showDialog = true
+                                taskSelected = task
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Buttom Return
+                CustomIconButton(
+                    text = "Volver",
+                    icon = Icons.Default.ArrowBack,
+                    iconPosition = IconPosition.LEFT,
+                    onClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+
+        if (showDialog) {
+            DialogEditTaskUser(
+                task = taskSelected,
+                onConfirm = { usertasks ->
+                    if (taskSelected != null) {
                         viewModel.updateUserTask(usertasks)
                     }
                     viewModel.fetchUserTasks()
                     showDialog = false
                     taskSelected = null
-                }, onDismiss = {showDialog = false
-                    viewModel.fetchUserTasks()
+                },
+                onDismiss = {
                     showDialog = false
+                    viewModel.fetchUserTasks()
                     taskSelected = null
-                }, onDelete = {id->
-                    if (taskSelected != null){
+                },
+                onDelete = { id ->
+                    if (taskSelected != null) {
                         viewModel.deleteUserTask(id)
                     }
                     viewModel.fetchUserTasks()
                     showDialog = false
                     taskSelected = null
-                })
+                }
+            )
+        }
+    }
+}
+
+
+
+@Composable
+fun FallingSnowflaketask(snowflaketask: Snowflaketask) {
+    var y by remember { mutableStateOf(-snowflaketask.size) }
+    var xOffset by remember { mutableStateOf(0f) }
+    val infiniteTransition = rememberInfiniteTransition()
+    val density = LocalDensity.current
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = (10000 / snowflaketask.frequency).toInt(),
+                easing = LinearEasing
+            )
+        )
+    )
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            y += snowflaketask.speed
+            xOffset = sin(phase * snowflaketask.frequency) * snowflaketask.amplitude
+            if (with(density) { y > 100.dp.toPx() + snowflaketask.size }) y = -snowflaketask.size // reboot
+            delay(16)
+        }
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp) // L
+    ) {
+        //snowflake
+        repeat(6) { i ->
+            val angle = (i * 60).toDouble()
+            drawLine(
+                color = Color.White.copy(alpha = 0.9f),
+                start = Offset(snowflaketask.x + xOffset, y),
+                end = Offset(
+                    snowflaketask.x + xOffset + (snowflaketask.size * cos(angle * PI / 180)).toFloat(),
+                    y + (snowflaketask.size * sin(angle * PI / 180)).toFloat()
+                ),
+                strokeWidth = 1.5f
+            )
+        }
+        drawCircle(
+            color = Color.White.copy(alpha = 0.8f),
+            radius = snowflaketask.size * 0.3f,
+            center = Offset(snowflaketask.x + xOffset, y),
+            style = Fill
+        )
+    }
+}
+
+
+data class Snowflaketask(
+    val x: Float,
+    val size: Float,
+    val speed: Float,
+    val amplitude: Float,
+    val frequency: Float
+)
+
+
+fun createSnowflaketask(maxPx: Float): Snowflaketask {
+    val random = Random.Default
+    return Snowflaketask(
+        x = random.nextFloat() * maxPx,
+        size = random.nextFloat() * 8 + 4f,
+        speed = random.nextFloat() * 2 + 1,
+        amplitude = random.nextFloat() * 20 + 10,
+        frequency = random.nextFloat() * 0.5f + 0.2f
+    )
+}
+
+@Composable
+fun CloudBackground() {
+    val density = LocalDensity.current
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        with(density) {
+            val cloudColor = Color(0xFF59C0EF)
+            val cloudRadius = 50.dp.toPx()
+            val height = size.height
+            val width = size.width
+
+
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius,
+                center = Offset(cloudRadius * 0.7f, height - cloudRadius * 0.4f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.8f,
+                center = Offset(cloudRadius * 1.6f, height - cloudRadius * 0.6f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.6f,
+                center = Offset(cloudRadius * 0.4f, height - cloudRadius * 1.2f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.4f,
+                center = Offset(cloudRadius * 1.9f, height - cloudRadius * 1.0f)
+            )
+
+
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius,
+                center = Offset(width - cloudRadius * 0.7f, height - cloudRadius * 0.4f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.8f,
+                center = Offset(width - cloudRadius * 1.6f, height - cloudRadius * 0.6f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.6f,
+                center = Offset(width - cloudRadius * 0.4f, height - cloudRadius * 1.2f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.4f,
+                center = Offset(width - cloudRadius * 1.9f, height - cloudRadius * 1.0f)
+            )
+        }
+    }
+}
+
+enum class IconPosition {
+    LEFT, RIGHT
+}
+
+@Composable
+fun CustomIconButton(
+    text: String,
+    icon: ImageVector,
+    iconPosition: IconPosition,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF59C0EF),
+            contentColor = Color.White
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp
+        )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (iconPosition == IconPosition.LEFT) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Text(
+                text = text,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+
+            if (iconPosition == IconPosition.RIGHT) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
 }
+
+
 
 @Composable
 fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
@@ -435,99 +653,8 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
     }
 }
 
-//@Composable
-//fun TaskListScreen(navController: NavController) {
-//    val viewModel: UserTaskViewModel = viewModel()
-//    val userTasks by viewModel.userTasks.collectAsState()
-//
-//
-//    LaunchedEffect(Unit) {
-//        viewModel.fetchUserTasks()
-//    }
-//    Column(
-//        modifier = Modifier
-//            .fillMaxSize()
-//            .padding(32.dp)
-//    ) {
-//        Text(
-//            text = "Lista de tareas",
-//            style = MaterialTheme.typography.headlineMedium,
-//            modifier = Modifier.padding(bottom = 24.dp)
-//        )
-//
-//        LazyColumn(
-//            modifier = Modifier.weight(1f),
-//            verticalArrangement = Arrangement.spacedBy(8.dp)
-//        ) {
-//            items(userTasks) { task ->
-//                TaskItem(
-//                    task = task,
-//                    onDelete = { viewModel.deleteUserTask(it) },
-//                    onEdit = { }
-//                )
-//            }
-//        }
-//
-//        // The task list would go here
-//
-//        Spacer(modifier = Modifier.weight(1f))
-//
-//        Button(
-//            onClick = { navController.popBackStack() },
-//            modifier = Modifier.fillMaxWidth()
-//        ) {
-//            Text("Volver")
-//        }
-//    }
-//}
-//
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//// Individual component to display a task (still incomplete)
-//fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
-//    Card(
-//        modifier = Modifier.fillMaxWidth(),
-//        onClick = onEdit
-//    ) {
-//        Column(
-//            modifier = Modifier.padding(16.dp)
-//        ) {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween
-//            ) {
-//                Text(
-//                    text = task.description,
-//                    style = MaterialTheme.typography.titleMedium
-//                )
-//                Text(
-//                    text = task.status,
-//                    color = when (task.status.lowercase()) {
-//                        "completada" -> MaterialTheme.colorScheme.primary
-//                        "pendiente" -> MaterialTheme.colorScheme.error
-//                        else -> MaterialTheme.colorScheme.onSurface
-//                    }
-//                )
-//            }
-//
-//            Spacer(modifier = Modifier.height(8.dp))
-//
-//            Text(
-//                text = "Vence: ${task.dueDate}",
-//                style = MaterialTheme.typography.bodySmall
-//            )
-//
-//            Spacer(modifier = Modifier.height(8.dp))
-//
-//            Button(
-//                onClick = { onDelete(task.id) },
-//                modifier = Modifier.align(Alignment.End),
-//                colors = ButtonDefaults.buttonColors(
-//                    containerColor = MaterialTheme.colorScheme.errorContainer
-//                )
-//            ) {
-//                Text("Eliminar")
-//            }
-//        }
-//    }
-//}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TaskListScreenPreview() {
+    TaskListScreen(navController = rememberNavController())
+}
