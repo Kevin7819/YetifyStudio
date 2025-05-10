@@ -14,15 +14,15 @@ import com.moviles.yetify.models.LoginResponse
 import com.moviles.yetify.network.RetrofitInstance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
 
 /**
  * ViewModel responsible for handling authentication logic and state.
- *
- * @param application The Android Application context
  */
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
+
     private val _loginResult = MutableStateFlow<LoginResult>(LoginResult.Idle)
     val loginResult: StateFlow<LoginResult> = _loginResult
 
@@ -36,6 +36,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = UserPreferences(application.applicationContext)
 
+    init {
+        // icializa RetrofitInstance con context (para el interceptor)In
+        RetrofitInstance.init(application)
+    }
+
+    /**
+     * Sealed class representing login state result.
+     */
     sealed class LoginResult {
         object Idle : LoginResult()
         object Loading : LoginResult()
@@ -43,6 +51,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         data class Error(val message: String) : LoginResult()
     }
 
+    /**
+     * Handles user login using provided credentials.
+     */
     fun login(userName: String, password: String) {
         viewModelScope.launch {
             _loginResult.value = LoginResult.Loading
@@ -57,9 +68,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                         userId = user.id
                         isAuthenticated = true
+
+                        // Save user ID and token
                         prefs.saveUser(user.id, user.token)
                         _loginResult.value = LoginResult.Success(user)
 
+                        // Debug logs
+                        Log.i("AuthViewModel", "Saved user id: ${prefs.userId.first()}")
+                        Log.i("AuthViewModel", "Saved token: ${prefs.token.first()}")
                         Log.i("AuthViewModel", "Login success. User: $user")
                     } ?: run {
                         _loginResult.value = LoginResult.Error("Empty response body")
@@ -84,9 +100,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Clears authentication data.
+     */
     fun logout() {
         isAuthenticated = false
         userId = null
         _loginResult.value = LoginResult.Idle
+        viewModelScope.launch {
+            prefs.clearUser()
+        }
     }
 }

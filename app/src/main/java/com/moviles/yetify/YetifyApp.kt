@@ -10,6 +10,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.moviles.yetify.ui.theme.screens.AppNavigation
+import com.moviles.yetify.ui.theme.screens.WelcomeScreen
+import com.moviles.yetify.ui.theme.screens.HomeScreen
+import com.moviles.yetify.ui.theme.screens.MainMenuScreen
+
+
 import com.moviles.yetify.viewmodel.AuthViewModel
 import androidx.compose.runtime.derivedStateOf
 
@@ -23,22 +28,38 @@ import androidx.compose.runtime.derivedStateOf
 @Composable
 fun YetifyApp() {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "welcome"
     ) {
+        composable("welcome") {
+            WelcomeScreen(
+                onLoginClick = { navController.navigate("login") },
+                onCreateAccountClick = { /* Navegar a pantalla de registro */ }
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate("main") {
-                        popUpTo("login") { inclusive = true }
+                        popUpTo("welcome") { inclusive = true }
                     }
                 }
             )
         }
+
         composable("main") {
+            HomeScreen(
+                onActivitiesClick = { /* navController.navigate("activities") */ },
+                onProgressClick   = { /* navController.navigate("progress") */ },
+                onTasksClick      = { navController.navigate("tasks") },
+                onReadingsClick   = { /* navController.navigate("readings") */ }
+            )
+        }
+
+        composable("tasks") {
             AppNavigation()
         }
     }

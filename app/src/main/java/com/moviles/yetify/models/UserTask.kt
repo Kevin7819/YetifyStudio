@@ -26,7 +26,7 @@ import androidx.room.PrimaryKey
 )
 
 data class UserTask(
-    @PrimaryKey(autoGenerate = true) val id: Int, //primary key
+    @PrimaryKey(autoGenerate = true) val id: Int?, //primary key
     @ColumnInfo(name = "idUser") val idUser: Int?, // ForeignKey
     @ColumnInfo(name = "idCourse") val idCourse: Int?, // ForeignKey
     @ColumnInfo(name = "description") val description: String,
