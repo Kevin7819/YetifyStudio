@@ -1,6 +1,8 @@
 package com.moviles.yetify
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -27,83 +29,129 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
-    // Local UI state
     var userName by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // ViewModel states
     val loginResult by viewModel.loginResult.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // Handle successful login navigation
     LaunchedEffect(loginResult) {
-        when (loginResult) {
-            is AuthViewModel.LoginResult.Success -> {
-                onLoginSuccess()
-            }
-            else -> {}
+        if (loginResult is AuthViewModel.LoginResult.Success) {
+            onLoginSuccess()
         }
     }
 
-    // Main UI Layout
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(Color.White)
     ) {
-        // Username Field
-        OutlinedTextField(
-            value = userName,
-            onValueChange = { userName = it },
-            label = { Text("Username") },
-            leadingIcon = { Icon(Icons.Default.Email, "Username") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        // Password Field
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            leadingIcon = { Icon(Icons.Default.Lock, "Password") },
-            visualTransformation = PasswordVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
-        )
-
-        Spacer(Modifier.height(24.dp))
-
-        // Error Message
-        when (loginResult) {
-            is AuthViewModel.LoginResult.Error -> {
-                Text(
-                    text = (loginResult as AuthViewModel.LoginResult.Error).message,
-                    color = Color.Red,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            else -> {}
+        // Botón Volver
+        TextButton(onClick = { /* TODO: Navegar atrás */ }) {
+            Text("Volver", color = Color(0xFF38B6FF))
         }
 
-        // Login Button
-        Button(
-            onClick = { viewModel.login(userName, password) },
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Título
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Iniciar", color = Color(0xFF38B6FF), style = MaterialTheme.typography.headlineLarge)
+            Text("Sesión", color = Color(0xFF38B6FF), style = MaterialTheme.typography.headlineLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                "Ingresa tus credenciales para acceder a tu cuenta",
+                color = Color(0xFF2D0C17)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Área azul celeste
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp),
-            enabled = userName.isNotBlank() && password.isNotBlank() && !isLoading
+                .weight(1f)
+                .background(Color(0xFF77BFD7), shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                .padding(horizontal = 32.dp, vertical = 24.dp)
         ) {
-            if (isLoading) {
-                CircularProgressIndicator(color = Color.White)
-            } else {
-                Text("Sign In")
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OutlinedTextField(
+                    value = userName,
+                    onValueChange = { userName = it },
+                    label = { Text("Correo electrónico") },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    "¿Olvidaste tu contraseña?",
+                    color = Color.White,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (loginResult is AuthViewModel.LoginResult.Error) {
+                    Text(
+                        text = (loginResult as AuthViewModel.LoginResult.Error).message,
+                        color = Color.Red,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                Button(
+                    onClick = { viewModel.login(userName, password) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    enabled = userName.isNotBlank() && password.isNotBlank() && !isLoading,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF))
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(color = Color.White)
+                    } else {
+                        Text("INICIAR SESIÓN", color = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Área inferior con curva blanca
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp))
+                        .padding(top = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("¿NO TIENES UNA CUENTA?", color = Color.Black)
+                    TextButton(onClick = { /* TODO: Navegar a registro */ }) {
+                        Text("REGÍSTRATE", color = Color.Black, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
             }
         }
     }
