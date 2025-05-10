@@ -11,6 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.moviles.yetify.ui.theme.screens.AppNavigation
 import com.moviles.yetify.ui.theme.screens.WelcomeScreen
+import com.moviles.yetify.ui.theme.screens.HomeScreen
+import com.moviles.yetify.ui.theme.screens.MainMenuScreen
+
 
 import com.moviles.yetify.viewmodel.AuthViewModel
 import androidx.compose.runtime.derivedStateOf
@@ -28,9 +31,8 @@ fun YetifyApp() {
 
     NavHost(
         navController = navController,
-        startDestination = "welcome" // Cambiado de "login" a "welcome"
+        startDestination = "welcome"
     ) {
-        // Pantalla de bienvenida
         composable("welcome") {
             WelcomeScreen(
                 onLoginClick = { navController.navigate("login") },
@@ -49,6 +51,15 @@ fun YetifyApp() {
         }
 
         composable("main") {
+            HomeScreen(
+                onActivitiesClick = { /* navController.navigate("activities") */ },
+                onProgressClick   = { /* navController.navigate("progress") */ },
+                onTasksClick      = { navController.navigate("tasks") },
+                onReadingsClick   = { /* navController.navigate("readings") */ }
+            )
+        }
+
+        composable("tasks") {
             AppNavigation()
         }
     }
