@@ -32,6 +32,10 @@ import com.moviles.yetify.models.UserTask
 import com.moviles.yetify.viewmodel.UserTaskViewModel
 import java.util.Calendar
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @Composable
@@ -109,8 +113,6 @@ fun calendarUserTask(list: List<UserTask>, localYear:Int, localMonth:Int, localD
                     montAct = 2
                 }
 
-//                Log.e("calendario", "cont ${conteo}  beforemonth${previousMonth}  beforeyear${previousYear}")
-//                Log.e("calendario", "lastdayActual ${lastDayActMonth} firsDayActual ${firstDayWeekActMonth}  lasDayBeforeM ${lastDayBeforeMonth} indx ${indexFirstDay}")
                 for (i in 0..<6) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         for (j in 0..<7) {
@@ -120,10 +122,43 @@ fun calendarUserTask(list: List<UserTask>, localYear:Int, localMonth:Int, localD
                                 colorToday = Color.Green
                             }
                             //color to task
-                            Text(text = "${conteo}",
-                                color = Color.Black,
-                                modifier = Modifier.weight(1f).height(60.dp).background(colorToday),
-                                textAlign = TextAlign.Center
+//                            Text(text = "${conteo}",
+//                                color = Color.Black,
+//                                modifier = Modifier.weight(1f).height(60.dp).background(colorToday),
+//                                textAlign = TextAlign.Center
+//                            )
+
+                            var monthToData = month
+                            var yearToDate = year
+                            if (montAct == 1){
+                                monthToData = if (month == 0) 12 else month - 1
+                                yearToDate = if (month == 0) year - 1 else year
+                            }
+                            if (montAct == 2){
+                                monthToData = month
+                                yearToDate = year
+                            }
+
+                            if(montAct == 3){
+                                monthToData = if (month + 1 == 13) 1 else month + 1
+                                yearToDate = if (month + 1 == 13) year + 1 else year
+
+                                Log.e("146" , "$monthToData  $yearToDate")
+                            }
+
+
+                            val calendar = Calendar.getInstance()
+                            calendar.set(Calendar.YEAR, yearToDate)
+                            calendar.set(Calendar.MONTH, monthToData - 1)
+                            calendar.set(Calendar.DAY_OF_MONTH, conteo)
+                            val currentDate = calendar.time
+
+                            CalendarDayItem(
+                                day = conteo,
+                                calendarDate = currentDate,
+                                localDate = Date(),
+                                tasks = list,
+                                modifier = Modifier.weight(1f)
                             )
 
                             if ((conteo + 1 > lastDayBeforeMonth && montAct == 1 || conteo + 1 > lastDayActMonth && montAct == 2)) {
@@ -176,7 +211,65 @@ fun calendarUserTask(list: List<UserTask>, localYear:Int, localMonth:Int, localD
             }
         }
     }
+}@Composable
+fun CalendarDayItem(
+    day: Int,
+    calendarDate: Date,
+    localDate: Date,
+    tasks: List<UserTask>,
+    modifier: Modifier = Modifier
+) {
+    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    Log.e("203", "$localDate  $calendarDate")
+    val taskOnThisDate = tasks.any { task ->
+        try {
+            val taskDate = sdf.parse(task.dueDate)
+            taskDate != null && isSameDay(taskDate, calendarDate)
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    val backgroundColor = when {
+        isSameDay(calendarDate, localDate) -> Color.Green
+        taskOnThisDate -> Color.Yellow.copy(alpha = 0.3f)
+        else -> Color.White
+    }
+
+    val statusText = when {
+        !taskOnThisDate -> ""
+        calendarDate.before(localDate) -> "Vencida"
+        isSameDay(calendarDate, localDate) -> "Hoy"
+        else -> "Próxima"
+    }
+
+    Column(
+        modifier = modifier
+            .height(60.dp)
+            .background(backgroundColor),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "$day", textAlign = TextAlign.Center, color = Color.Black)
+        if (statusText.isNotEmpty()) {
+            Text(text = statusText, fontSize = 10.sp, color = Color.DarkGray)
+        }
+    }
 }
+
+fun isSameDay(date1: Date, date2: Date): Boolean {
+    val cal1 = Calendar.getInstance().apply { time = date1 }
+    val cal2 = Calendar.getInstance().apply { time = date2 }
+
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+            cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+            cal1.get(Calendar.DAY_OF_MONTH) == cal2.get(Calendar.DAY_OF_MONTH)
+}
+
+
+
+
+
 fun getMonthNameLegacy(year: Int, month: Int): String {
     val calendar = Calendar.getInstance()
     calendar.set(Calendar.YEAR, year)
