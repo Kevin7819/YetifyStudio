@@ -135,8 +135,8 @@ fun calendarUserTask(list: List<UserTask>, localYear:Int, localMonth:Int, localD
                                 yearToDate = if (month == 0) year - 1 else year
                             }
                             if (montAct == 2){
-                                var monthToData = month
-                                var yearToDate = year
+                                monthToData = month
+                                yearToDate = year
                             }
 
                             if(montAct == 3){
