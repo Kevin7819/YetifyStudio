@@ -1,12 +1,12 @@
-package com.moviles.yetify
+package com.moviles.yetify.ui.theme.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,35 +16,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.moviles.yetify.viewmodel.AuthViewModel
 
-/**
- * Composable function that displays the login screen and handles authentication flow.
- *
- * @param onLoginSuccess Callback invoked when login is successful, for navigation
- * @param viewModel The AuthViewModel that handles authentication logic
- */
 @Composable
-fun LoginScreen(
-    onLoginSuccess: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+fun VerifyCodeAndResetPasswordScreen(
+    email: String, // User's email to display where the code was sent
+    onResetPassword: (code: String, newPassword: String, confirmPassword: String) -> Unit, // Callback to handle password reset logic
+    onBackClick: () -> Unit // Callback to navigate back
 ) {
-    var userName by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
-    val loginResult by viewModel.loginResult.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-
-    LaunchedEffect(loginResult) {
-        if (loginResult is AuthViewModel.LoginResult.Success) {
-            onLoginSuccess()
-        }
-    }
+    // UI states for user input
+    var code by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var isSubmitting by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Fondo blanco superior
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -52,34 +38,34 @@ fun LoginScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón "Volver"
+            // "Back" button
             TextButton(
-                onClick = { /* Acción de volver */ },
+                onClick = { onBackClick() },
                 modifier = Modifier.padding(start = 16.dp)
             ) {
                 Text("◀ Volver", color = Color(0xFF38B6FF))
             }
 
-            // Título
+            // Title and subtitle
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    "Iniciar",
+                    text = "Verifica",
                     color = Color(0xFF38B6FF),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.headlineLarge
                 )
                 Text(
-                    "Sesión",
+                    text = "Código y Nueva Contraseña",
                     color = Color(0xFF38B6FF),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.headlineLarge
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Ingresa tus credenciales para acceder a tu cuenta",
+                    text = "Se ha enviado un código al correo: $email",
                     color = Color(0xFF2D0C17),
                     style = MaterialTheme.typography.bodyLarge
                 )
@@ -87,13 +73,13 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Parte azul con inputs
+            // Main form container
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .background(
-                        Color(0xFF77BFD7),
+                        color = Color(0xFF77BFD7),
                         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
                     )
                     .padding(horizontal = 32.dp, vertical = 24.dp)
@@ -102,19 +88,24 @@ fun LoginScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
                 ) {
+                    // Verification code input (only digits, max 6 characters)
                     OutlinedTextField(
-                        value = userName,
-                        onValueChange = { userName = it },
-                        label = { Text("Correo electrónico", color = Color.White) },
-                        leadingIcon = {
-                            Icon(Icons.Default.Email, contentDescription = "Correo", tint = Color.White)
+                        value = code,
+                        onValueChange = { input ->
+                            if (input.length <= 6 && input.all { it.isDigit() }) {
+                                code = input
+                            }
                         },
+                        label = { Text("Código de verificación", color = Color.White) },
+                        leadingIcon = {
+                            Icon(Icons.Default.VpnKey, contentDescription = null, tint = Color.White)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(50),
-                        singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.White,
@@ -131,27 +122,21 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // New password input
                     OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = {
-                            Text(
-                                "Contraseña",
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        },
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("Nueva contraseña", color = Color.White) },
                         leadingIcon = {
-                            Icon(Icons.Default.Lock, contentDescription = "Contraseña", tint = Color.White)
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White)
                         },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         visualTransformation = PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        shape = RoundedCornerShape(50),
-                        singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.White,
                             unfocusedBorderColor = Color.White,
@@ -161,45 +146,76 @@ fun LoginScreen(
                             unfocusedLeadingIconColor = Color.White,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
-                            cursorColor = Color.White,
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White
                         )
                     )
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Confirm password input
+                    OutlinedTextField(
+                        value = confirmPassword,
+                        onValueChange = { confirmPassword = it },
+                        label = { Text("Confirmar contraseña", color = Color.White) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        visualTransformation = PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(50),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(60.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.White,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.White,
+                            focusedLeadingIconColor = Color.White,
+                            unfocusedLeadingIconColor = Color.White,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        "¿Olvidaste tu contraseña?",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (loginResult is AuthViewModel.LoginResult.Error) {
-                        Text(
-                            text = (loginResult as AuthViewModel.LoginResult.Error).message,
-                            color = Color.Red,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
+                    // Error message if passwords don't match
+                    if (errorMessage.isNotEmpty()) {
+                        Text(text = errorMessage, color = Color.Red)
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
+                    // Submit button
                     Button(
-                        onClick = { viewModel.login(userName, password) },
+                        onClick = {
+                            if (newPassword == confirmPassword) {
+                                errorMessage = ""
+                                isSubmitting = true
+                                onResetPassword(code, newPassword, confirmPassword)
+                            } else {
+                                errorMessage = "Las contraseñas no coinciden"
+                            }
+                        },
+                        enabled = code.length == 6 &&
+                                newPassword.isNotBlank() &&
+                                confirmPassword.isNotBlank() &&
+                                !isSubmitting,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF)),
+                        shape = RoundedCornerShape(50),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
-                        enabled = userName.isNotBlank() && password.isNotBlank() && !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF)),
-                        shape = RoundedCornerShape(50)
+                            .height(60.dp)
                     ) {
-                        if (isLoading) {
+                        if (isSubmitting) {
                             CircularProgressIndicator(color = Color.White)
                         } else {
                             Text(
-                                "INICIAR SESIÓN",
+                                text = "RESTABLECER CONTRASEÑA",
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelLarge
                             )
@@ -207,23 +223,6 @@ fun LoginScreen(
                     }
                 }
             }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("¿NO TIENES UNA CUENTA?", color = Color.Black)
-                TextButton(onClick = { /* Acción de registro */ }) {
-                    Text(
-                        "REGÍSTRATE",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-            }
-
         }
     }
 }

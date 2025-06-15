@@ -1,8 +1,11 @@
 package com.moviles.yetify.network
+import com.moviles.yetify.models.ApiResponse
 import com.moviles.yetify.models.Course
+import com.moviles.yetify.models.ForgotPasswordRequest
 import com.moviles.yetify.models.LoginApiResponse
 import com.moviles.yetify.models.LoginRequest
 import com.moviles.yetify.models.LoginResponse
+import com.moviles.yetify.models.ResetPasswordRequest
 import com.moviles.yetify.models.UserTask
 import com.moviles.yetify.viewmodel.UserTaskViewModel
 import retrofit2.Response
@@ -48,4 +51,10 @@ interface ApiService {
 
     @POST("/api/Auth/Login")
     suspend fun login(@Body request: LoginRequest): Response<LoginApiResponse>
+
+    @POST("/api/Auth/forgot-password")
+    suspend fun forgotPassword(@Body request: ForgotPasswordRequest): Response<ApiResponse>
+
+    @POST("/api/Auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ApiResponse>
 }
