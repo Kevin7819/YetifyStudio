@@ -1,111 +1,775 @@
+
 package com.moviles.yetify.ui.theme.screens
 
-
+import android.icu.text.SimpleDateFormat
+import android.util.Log
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-
 import com.moviles.yetify.models.UserTask
 import com.moviles.yetify.viewmodel.UserTaskViewModel
-
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.modifier.modifierLocalOf
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import com.moviles.yetify.ui.theme.YetifyTheme
+import java.sql.Date
+import java.util.Locale
+
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.navigation.compose.rememberNavController
+
+
+
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.random.Random
+
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.PI
+import kotlin.math.sin
+import kotlin.math.cos
 
 
 @Composable
 fun TaskListScreen(navController: NavController) {
-    Column(
+    val viewModel: UserTaskViewModel = viewModel()
+    val userTasks by viewModel.userTasks.collectAsState()
+
+    var showDialog   by remember { mutableStateOf(false) }
+    var taskSelected by remember { mutableStateOf<UserTask?>(null) }
+    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+    val snowflakes  = remember { List(15) { createSnowflaketask(screenWidth.value) } }
+
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserTasks()
+    }
+
+
+    LaunchedEffect(showDialog) {
+        if (!showDialog) {
+            viewModel.fetchUserTasks()
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp)
+            .background(Color.White)
     ) {
-        Text(
-            text = "Lista de tareas",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
 
-        // The task list would go here
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = { navController.popBackStack() },
-            modifier = Modifier.fillMaxWidth()
+        CloudBackground()
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
         ) {
-            Text("Volver")
+            snowflakes.forEach { flake ->
+                FallingSnowflaketask(snowflaketask = flake)
+            }
+        }
+
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .background(Color(0xFF59C0EF).copy(alpha = 0.9f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                ) {
+                    Text(
+                        "Lista de tareas",
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Descripción",
+                        color = Color(0xFF59C0EF),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f))
+                    Text("Estado",
+                        color = Color(0xFF59C0EF),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(80.dp))
+                    Text("Editar/\nEliminar",
+                        color = Color(0xFF59C0EF),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.width(80.dp))
+                }
+
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(userTasks) { task ->
+                        TaskItem(
+                            task = task,
+                            onDelete = { viewModel.deleteUserTask(it) },
+                            onEdit = {
+                                taskSelected = task
+                                showDialog   = true
+                            }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+
+                CustomIconButton(
+                    text = "Volver",
+                    icon = Icons.Default.ArrowBack,
+                    iconPosition = IconPosition.LEFT,
+                    onClick = { navController.popBackStack() }
+                )
+            }
+        }
+
+
+        if (showDialog) {
+            DialogEditTaskUser(
+                task = taskSelected,
+                onConfirm = { updatedTask ->
+                    viewModel.updateUserTask(updatedTask)
+                    showDialog   = false
+                    taskSelected = null
+                },
+                onDismiss = {
+                    showDialog   = false
+                    taskSelected = null
+                },
+                onDelete = { id ->
+                    viewModel.deleteUserTask(id)
+                    showDialog   = false
+                    taskSelected = null
+                }
+            )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
+
+
 @Composable
-// Individual component to display a task (still incomplete)
-fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = onEdit
+fun FallingSnowflaketask(snowflaketask: Snowflaketask) {
+    var y by remember { mutableStateOf(-snowflaketask.size) }
+    var xOffset by remember { mutableStateOf(0f) }
+    val infiniteTransition = rememberInfiniteTransition()
+    val density = LocalDensity.current
+    val phase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = (2 * PI).toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = (10000 / snowflaketask.frequency).toInt(),
+                easing = LinearEasing
+            )
+        )
+    )
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            y += snowflaketask.speed
+            xOffset = sin(phase * snowflaketask.frequency) * snowflaketask.amplitude
+            if (with(density) { y > 100.dp.toPx() + snowflaketask.size }) y = -snowflaketask.size // reboot
+            delay(16)
+        }
+    }
+
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp) // L
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = task.description,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = task.status,
-                    color = when (task.status.lowercase()) {
-                        "completada" -> MaterialTheme.colorScheme.primary
-                        "pendiente" -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-                )
-            }
+        //snowflake
+        repeat(6) { i ->
+            val angle = (i * 60).toDouble()
+            drawLine(
+                color = Color.White.copy(alpha = 0.9f),
+                start = Offset(snowflaketask.x + xOffset, y),
+                end = Offset(
+                    snowflaketask.x + xOffset + (snowflaketask.size * cos(angle * PI / 180)).toFloat(),
+                    y + (snowflaketask.size * sin(angle * PI / 180)).toFloat()
+                ),
+                strokeWidth = 1.5f
+            )
+        }
+        drawCircle(
+            color = Color.White.copy(alpha = 0.8f),
+            radius = snowflaketask.size * 0.3f,
+            center = Offset(snowflaketask.x + xOffset, y),
+            style = Fill
+        )
+    }
+}
 
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "Vence: ${task.dueDate}",
-                style = MaterialTheme.typography.bodySmall
+data class Snowflaketask(
+    val x: Float,
+    val size: Float,
+    val speed: Float,
+    val amplitude: Float,
+    val frequency: Float
+)
+
+
+fun createSnowflaketask(maxPx: Float): Snowflaketask {
+    val random = Random.Default
+    return Snowflaketask(
+        x = random.nextFloat() * maxPx,
+        size = random.nextFloat() * 8 + 4f,
+        speed = random.nextFloat() * 2 + 1,
+        amplitude = random.nextFloat() * 20 + 10,
+        frequency = random.nextFloat() * 0.5f + 0.2f
+    )
+}
+
+@Composable
+fun CloudBackground() {
+    val density = LocalDensity.current
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        with(density) {
+            val cloudColor = Color(0xFF59C0EF)
+            val cloudRadius = 50.dp.toPx()
+            val height = size.height
+            val width = size.width
+
+
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius,
+                center = Offset(cloudRadius * 0.7f, height - cloudRadius * 0.4f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.8f,
+                center = Offset(cloudRadius * 1.6f, height - cloudRadius * 0.6f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.6f,
+                center = Offset(cloudRadius * 0.4f, height - cloudRadius * 1.2f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.4f,
+                center = Offset(cloudRadius * 1.9f, height - cloudRadius * 1.0f)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
 
-            Button(
-                onClick = { onDelete(task.id) },
-                modifier = Modifier.align(Alignment.End),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius,
+                center = Offset(width - cloudRadius * 0.7f, height - cloudRadius * 0.4f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.8f,
+                center = Offset(width - cloudRadius * 1.6f, height - cloudRadius * 0.6f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.6f,
+                center = Offset(width - cloudRadius * 0.4f, height - cloudRadius * 1.2f)
+            )
+            drawCircle(
+                color = cloudColor,
+                radius = cloudRadius * 0.4f,
+                center = Offset(width - cloudRadius * 1.9f, height - cloudRadius * 1.0f)
+            )
+        }
+    }
+}
+
+enum class IconPosition {
+    LEFT, RIGHT
+}
+
+@Composable
+fun CustomIconButton(
+    text: String,
+    icon: ImageVector,
+    iconPosition: IconPosition,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFF59C0EF),
+            contentColor = Color.White
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp
+        )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (iconPosition == IconPosition.LEFT) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
                 )
-            ) {
-                Text("Eliminar")
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Text(
+                text = text,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                textAlign = TextAlign.Center
+            )
+
+            if (iconPosition == IconPosition.RIGHT) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
+}
+
+
+@Composable
+fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
+
+    val isOverdue = remember {
+        if (task.dueDate.isNullOrEmpty()) false
+        else {
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val dueDate = dateFormat.parse(task.dueDate)
+                val currentDate = System.currentTimeMillis()
+                dueDate != null &&
+                        dueDate.time < currentDate &&
+                        !task.status.equals("Completada", ignoreCase = true)
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(25.dp))
+            .background(Color(0xFF2AACF3))
+            .padding(vertical = 12.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = task.description,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.weight(1f)
+        )
+
+
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(getStatusBackgroundColor(task.status, isOverdue))
+                .padding(8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                task.status.equals("Completada", ignoreCase = true) ->
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Completada",
+                        tint = Color.White
+                    )
+                isOverdue ->
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Vencida",
+                        tint = Color.White
+                    )
+                task.status.equals("Pendiente", ignoreCase = true) ->
+                    Icon(
+                        imageVector = Icons.Default.BookmarkAdd,
+                        contentDescription = "Pendiente",
+                        tint = Color.White
+                    )
+                else ->
+                    Icon(
+                        imageVector = Icons.Default.AvTimer,
+                        contentDescription = "En proceso",
+                        tint = Color.White
+                    )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+        IconButton(
+            onClick = onEdit,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(Color.White)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = "Editar",
+                tint = Color(0xFF2AACF3)
+            )
+        }
+    }
+}
+
+@Composable
+private fun getStatusBackgroundColor(status: String, isOverdue: Boolean): Color {
+    return when {
+        isOverdue -> Color(0xFFF44336)
+        status.equals("Completada", ignoreCase = true) -> Color(0xFF4CAF50)
+        status.equals("Pendiente", ignoreCase = true) -> Color(0xFFFFC107)
+        else -> Color(0xFFFF9800)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun previewDialogEdit(){
+    YetifyTheme {
+        val task = UserTask(
+            id = 1,
+            idUser = 1,
+            idCourse = 1,
+            description = "Nothing",
+            dueDate = "2025-12-2",
+            status = "Pendiente"
+        )
+
+        DialogEditTaskUser(task = task, onConfirm = {}, onDismiss = {}, onDelete = {})
+    }
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DialogEditTaskUser(
+    task: UserTask?,
+    onConfirm: (UserTask) -> Unit,
+    onDismiss: () -> Unit,
+    onDelete: (id: Int) -> Unit
+) {
+    var description by remember { mutableStateOf(TextFieldValue(task?.description ?: "")) }
+    var dueDate by remember {
+        mutableStateOf(
+            TextFieldValue(
+                task?.dueDate
+                    ?.substringBefore("T")
+                    ?: ""
+            )
+        )
+    }
+
+    val statusOptions = listOf("Pendiente", "Completada", "En progreso")
+    var expanded by remember { mutableStateOf(false) }
+    var statusText by remember { mutableStateOf(task?.status ?: "") }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val datePickerState = rememberDatePickerState()
+
+    if (showDatePicker) {
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        dueDate = TextFieldValue(fmt.format(Date(millis)))
+                    }
+                    showDatePicker = false
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF1565C0),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    text = "Editar Tarea",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(16.dp))
+
+
+                TaskField(
+                    label = "Descripción",
+                    placeholder = "Descripción",
+                    value = description,
+                    onValueChange = { description = it },
+                    icon = Icons.Default.Edit
+                )
+                Spacer(Modifier.height(12.dp))
+
+
+                TaskField(
+                    label = "Fecha vencimiento",
+                    placeholder = "Fecha de entrega",
+                    value = dueDate,
+                    onValueChange = { dueDate = it },
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
+                )
+                Spacer(Modifier.height(12.dp))
+
+
+                Text(
+                    text = "Estado",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(start = 4.dp, bottom = 4.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = statusText,
+                        onValueChange = { /* no-op */ },
+                        readOnly = true,
+                        label = null,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .padding(top = 0.dp)
+                            .clickable { expanded = true },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(
+                            disabledContainerColor  = Color.White,
+                            disabledTextColor       = Color.Black.copy(alpha = 0.6f),
+                            cursorColor             = Color.Black,
+                            focusedIndicatorColor   = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            disabledIndicatorColor  = Color.Gray,
+                            focusedLabelColor       = Color.White,
+                            unfocusedLabelColor     = Color.White,
+                            disabledLabelColor      = Color.White.copy(alpha = 0.6f)
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        statusOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option, color = Color.Black) },
+                                onClick = {
+                                    statusText = option
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+
+                errorMessage?.let {
+                    Text(
+                        text = it,
+                        color = Color.Yellow,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
+
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(
+                        onClick = {
+                            if (description.text.isBlank()
+                                || dueDate.text.isBlank()
+                                || statusText.isBlank()
+                            ) {
+                                errorMessage = "Todos los campos son obligatorios"
+                                return@Button
+                            }
+                            onConfirm(
+                                UserTask(
+                                    id = task?.id,
+                                    idUser = task?.idUser,
+                                    idCourse = task?.idCourse,
+                                    description = description.text,
+                                    dueDate = dueDate.text,
+                                    status = statusText
+                                )
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                        modifier = Modifier.height(40.dp)
+                    ) {
+                        Text("Guardar", color = Color(0xFF1565C0))
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Button(
+                        onClick = { onDelete(task?.id ?: -1) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                        modifier = Modifier.height(40.dp)
+                    ) {
+                        Text("Eliminar", color = Color.White)
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.height(40.dp)
+                    ) {
+                        Text("Cancelar", color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TaskListScreenPreview() {
+    TaskListScreen(navController = rememberNavController())
 }
