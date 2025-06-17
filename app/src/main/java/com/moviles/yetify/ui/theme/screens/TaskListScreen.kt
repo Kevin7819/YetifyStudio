@@ -44,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
@@ -101,13 +102,22 @@ import kotlin.math.cos
 fun TaskListScreen(navController: NavController) {
     val viewModel: UserTaskViewModel = viewModel()
     val userTasks by viewModel.userTasks.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
+
+    var showDialog   by remember { mutableStateOf(false) }
     var taskSelected by remember { mutableStateOf<UserTask?>(null) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val snowflakes = remember { List(15) { createSnowflaketask(screenWidth.value) } }
+    val snowflakes  = remember { List(15) { createSnowflaketask(screenWidth.value) } }
+
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserTasks()
+    }
+
+
+    LaunchedEffect(showDialog) {
+        if (!showDialog) {
+            viewModel.fetchUserTasks()
+        }
     }
 
     Box(
@@ -115,24 +125,20 @@ fun TaskListScreen(navController: NavController) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Clouds
-        CloudBackground()
 
-        // snowflakes
+        CloudBackground()
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(100.dp)
         ) {
-            snowflakes.forEach { snowflake ->
-                FallingSnowflaketask(snowflaketask = snowflake)
+            snowflakes.forEach { flake ->
+                FallingSnowflaketask(snowflaketask = flake)
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Eaimation snowflakes
+        Column(modifier = Modifier.fillMaxSize()) {
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -145,16 +151,15 @@ fun TaskListScreen(navController: NavController) {
                     modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
                     Text(
-                        text = "Lista de tareas",
+                        "Lista de tareas",
                         color = Color.White,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(end = 8.dp)
                     )
-
                     Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Lista de tareas",
+                        Icons.Default.Check,
+                        contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
@@ -167,7 +172,6 @@ fun TaskListScreen(navController: NavController) {
                     .fillMaxSize()
                     .padding(24.dp)
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -175,32 +179,23 @@ fun TaskListScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Descripción",
+                    Text("Descripción",
                         color = Color(0xFF59C0EF),
-                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "Estado",
+                        modifier = Modifier.weight(1f))
+                    Text("Estado",
                         color = Color(0xFF59C0EF),
-                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.width(80.dp)
-                    )
-                    Text(
-                        text = "Editar/\nEliminar",
+                        modifier = Modifier.width(80.dp))
+                    Text("Editar/\nEliminar",
                         color = Color(0xFF59C0EF),
-                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.width(80.dp)
-                    )
+                        modifier = Modifier.width(80.dp))
                 }
 
-                // List Task
+
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -210,8 +205,8 @@ fun TaskListScreen(navController: NavController) {
                             task = task,
                             onDelete = { viewModel.deleteUserTask(it) },
                             onEdit = {
-                                showDialog = true
                                 taskSelected = task
+                                showDialog   = true
                             }
                         )
                     }
@@ -219,7 +214,7 @@ fun TaskListScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Buttom Return
+
                 CustomIconButton(
                     text = "Volver",
                     icon = Icons.Default.ArrowBack,
@@ -233,31 +228,25 @@ fun TaskListScreen(navController: NavController) {
         if (showDialog) {
             DialogEditTaskUser(
                 task = taskSelected,
-                onConfirm = { usertasks ->
-                    if (taskSelected != null) {
-                        viewModel.updateUserTask(usertasks)
-                    }
-                    viewModel.fetchUserTasks()
-                    showDialog = false
+                onConfirm = { updatedTask ->
+                    viewModel.updateUserTask(updatedTask)
+                    showDialog   = false
                     taskSelected = null
                 },
                 onDismiss = {
-                    showDialog = false
-                    viewModel.fetchUserTasks()
+                    showDialog   = false
                     taskSelected = null
                 },
                 onDelete = { id ->
-                    if (taskSelected != null) {
-                        viewModel.deleteUserTask(id)
-                    }
-                    viewModel.fetchUserTasks()
-                    showDialog = false
+                    viewModel.deleteUserTask(id)
+                    showDialog   = false
                     taskSelected = null
                 }
             )
         }
     }
 }
+
 
 
 
@@ -452,9 +441,26 @@ fun CustomIconButton(
 }
 
 
-
 @Composable
 fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
+
+    val isOverdue = remember {
+        if (task.dueDate.isNullOrEmpty()) false
+        else {
+            try {
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val dueDate = dateFormat.parse(task.dueDate)
+                val currentDate = System.currentTimeMillis()
+                dueDate != null &&
+                        dueDate.time < currentDate &&
+                        !task.status.equals("Completada", ignoreCase = true)
+            } catch (e: Exception) {
+                false
+            }
+        }
+    }
+
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -464,7 +470,6 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-
         Text(
             text = task.description,
             color = Color.White,
@@ -478,26 +483,35 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(getStatusBackgroundColor(task.status))
+                .background(getStatusBackgroundColor(task.status, isOverdue))
                 .padding(8.dp),
             contentAlignment = Alignment.Center
         ) {
-            when (task.status.lowercase()) {
-                "completada" -> Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Completada",
-                    tint = Color.White
-                )
-                "pendiente" -> Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Pendiente",
-                    tint = Color.White
-                )
-                else -> Icon(
-                    imageVector = Icons.Default.Refresh,
-                    contentDescription = "En proceso",
-                    tint = Color.White
-                )
+            when {
+                task.status.equals("Completada", ignoreCase = true) ->
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Completada",
+                        tint = Color.White
+                    )
+                isOverdue ->
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Vencida",
+                        tint = Color.White
+                    )
+                task.status.equals("Pendiente", ignoreCase = true) ->
+                    Icon(
+                        imageVector = Icons.Default.BookmarkAdd,
+                        contentDescription = "Pendiente",
+                        tint = Color.White
+                    )
+                else ->
+                    Icon(
+                        imageVector = Icons.Default.AvTimer,
+                        contentDescription = "En proceso",
+                        tint = Color.White
+                    )
             }
         }
 
@@ -519,10 +533,11 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun getStatusBackgroundColor(status: String): Color {
-    return when (status.lowercase()) {
-        "completada" -> Color(0xFF4CAF50)
-        "pendiente" -> Color(0xFFF44336)
+private fun getStatusBackgroundColor(status: String, isOverdue: Boolean): Color {
+    return when {
+        isOverdue -> Color(0xFFF44336)
+        status.equals("Completada", ignoreCase = true) -> Color(0xFF4CAF50)
+        status.equals("Pendiente", ignoreCase = true) -> Color(0xFFFFC107)
         else -> Color(0xFFFF9800)
     }
 }
@@ -547,13 +562,30 @@ fun previewDialogEdit(){
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss: () -> Unit, onDelete:(id:Int)->Unit) {
+fun DialogEditTaskUser(
+    task: UserTask?,
+    onConfirm: (UserTask) -> Unit,
+    onDismiss: () -> Unit,
+    onDelete: (id: Int) -> Unit
+) {
     var description by remember { mutableStateOf(TextFieldValue(task?.description ?: "")) }
-    var dueDate by remember { mutableStateOf(TextFieldValue(task?.dueDate ?: "")) }
-    var status by remember { mutableStateOf(TextFieldValue(task?.status ?: "")) }
+    var dueDate by remember {
+        mutableStateOf(
+            TextFieldValue(
+                task?.dueDate
+                    ?.substringBefore("T")
+                    ?: ""
+            )
+        )
+    }
+
+    val statusOptions = listOf("Pendiente", "Completada", "En progreso")
+    var expanded by remember { mutableStateOf(false) }
+    var statusText by remember { mutableStateOf(task?.status ?: "") }
+
     var showDatePicker by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var datePickerState = rememberDatePickerState()
+    val datePickerState = rememberDatePickerState()
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -561,18 +593,14 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        dueDate = TextFieldValue(formatter.format(Date(millis)))
+                        val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        dueDate = TextFieldValue(fmt.format(Date(millis)))
                     }
                     showDatePicker = false
-                }) {
-                    Text("OK")
-                }
+                }) { Text("OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -580,71 +608,157 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
     }
 
     BasicAlertDialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(16.dp), color = Color(0xFF1565C0), modifier = Modifier.padding(16.dp)) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFF1565C0),
+            modifier = Modifier.padding(16.dp)
+        ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text( text = "Editar Tarea", style = MaterialTheme.typography.headlineSmall, color = Color.White,
-                    modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center )
-                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Editar Tarea",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = Color.White,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(16.dp))
 
-                TaskField( label = "Descripción", placeholder = "Descripción", value = description,
-                    onValueChange = { description = it }, icon = Icons.Default.Edit)
 
-                TaskField( label = "Fecha vencimiento", placeholder = "Fecha de entrega", value = dueDate,
-                    onValueChange = { dueDate = it }, icon = Icons.Default.DateRange,
-                    onClick = { showDatePicker = true })
+                TaskField(
+                    label = "Descripción",
+                    placeholder = "Descripción",
+                    value = description,
+                    onValueChange = { description = it },
+                    icon = Icons.Default.Edit
+                )
+                Spacer(Modifier.height(12.dp))
 
-                TaskField( label = "Estado", placeholder = "Estado", value = status,
-                    onValueChange = { status = it }, icon = Icons.Default.Info,)
 
-                if (errorMessage != null) {
+                TaskField(
+                    label = "Fecha vencimiento",
+                    placeholder = "Fecha de entrega",
+                    value = dueDate,
+                    onValueChange = { dueDate = it },
+                    icon = Icons.Default.DateRange,
+                    onClick = { showDatePicker = true }
+                )
+                Spacer(Modifier.height(12.dp))
+
+
+                Text(
+                    text = "Estado",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(start = 4.dp, bottom = 4.dp)
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = statusText,
+                        onValueChange = { /* no-op */ },
+                        readOnly = true,
+                        label = null,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor()
+                            .padding(top = 0.dp)
+                            .clickable { expanded = true },
+                        colors = ExposedDropdownMenuDefaults.textFieldColors(
+                            disabledContainerColor  = Color.White,
+                            disabledTextColor       = Color.Black.copy(alpha = 0.6f),
+                            cursorColor             = Color.Black,
+                            focusedIndicatorColor   = Color.Black,
+                            unfocusedIndicatorColor = Color.Black,
+                            disabledIndicatorColor  = Color.Gray,
+                            focusedLabelColor       = Color.White,
+                            unfocusedLabelColor     = Color.White,
+                            disabledLabelColor      = Color.White.copy(alpha = 0.6f)
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        statusOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option, color = Color.Black) },
+                                onClick = {
+                                    statusText = option
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+
+                errorMessage?.let {
                     Text(
-                        text = errorMessage ?: "",
+                        text = it,
                         color = Color.Yellow,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
 
-                Row(modifier = Modifier.fillMaxWidth().padding(10.dp), horizontalArrangement = Arrangement.Center){
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
                     Button(
                         onClick = {
-                            if (description.text.isBlank() || dueDate.text.isBlank() || status.text.isBlank()) {
+                            if (description.text.isBlank()
+                                || dueDate.text.isBlank()
+                                || statusText.isBlank()
+                            ) {
                                 errorMessage = "Todos los campos son obligatorios"
                                 return@Button
                             }
-                            var usertask =UserTask(id = task?.id,
-                                idUser = task?.idUser,
-                                idCourse = task?.idCourse,
-                                description = description.text,
-                                dueDate = dueDate.text,
-                                status = status.text
+                            onConfirm(
+                                UserTask(
+                                    id = task?.id,
+                                    idUser = task?.idUser,
+                                    idCourse = task?.idCourse,
+                                    description = description.text,
+                                    dueDate = dueDate.text,
+                                    status = statusText
+                                )
                             )
-                            onConfirm(usertask) },
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                         modifier = Modifier.height(40.dp)
                     ) {
                         Text("Guardar", color = Color(0xFF1565C0))
                     }
                 }
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(Modifier.height(16.dp))
+
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-
                     Button(
-                        onClick = {
-                            val id = task?.id ?: -1
-                            onDelete(id)
-                        },
+                        onClick = { onDelete(task?.id ?: -1) },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                         modifier = Modifier.height(40.dp)
                     ) {
                         Text("Eliminar", color = Color.White)
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    TextButton(onClick = onDismiss,modifier = Modifier.height(40.dp)) {
+                    Spacer(Modifier.width(12.dp))
+                    TextButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.height(40.dp)
+                    ) {
                         Text("Cancelar", color = Color.White)
                     }
                 }
@@ -652,6 +766,7 @@ fun DialogEditTaskUser(task: UserTask?, onConfirm: (UserTask) -> Unit, onDismiss
         }
     }
 }
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
