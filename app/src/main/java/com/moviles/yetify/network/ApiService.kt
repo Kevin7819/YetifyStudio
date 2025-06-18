@@ -1,5 +1,6 @@
 package com.moviles.yetify.network
 import com.moviles.yetify.models.ApiResponse
+import com.moviles.yetify.models.Book
 import com.moviles.yetify.models.Course
 import com.moviles.yetify.models.ForgotPasswordRequest
 import com.moviles.yetify.models.LoginApiResponse
@@ -57,4 +58,11 @@ interface ApiService {
 
     @POST("/api/Auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ApiResponse>
+
+    //books api
+    @GET("api/Books")
+    suspend fun getListBooks():List<Book>
+
+    @GET("api/Books/{id}")
+    suspend fun getBook():Book?
 }
