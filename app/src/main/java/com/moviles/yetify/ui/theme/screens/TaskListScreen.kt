@@ -1,4 +1,3 @@
-
 package com.moviles.yetify.ui.theme.screens
 
 import android.icu.text.SimpleDateFormat
@@ -80,34 +79,46 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
-
-import androidx.compose.ui.platform.LocalDensity
-import kotlin.math.PI
-import kotlin.math.sin
 import kotlin.math.cos
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(navController: NavController) {
     val viewModel: UserTaskViewModel = viewModel()
     val userTasks by viewModel.userTasks.collectAsState()
+
+    var selectedFilter by remember { mutableStateOf("Todas") }
+    val filterOptions = listOf("Todas", "Pendientes", "Completadas", "No hechas", "En progreso")
+    var expanded by remember { mutableStateOf(false) }
 
     var showDialog   by remember { mutableStateOf(false) }
     var taskSelected by remember { mutableStateOf<UserTask?>(null) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
     val snowflakes  = remember { List(15) { createSnowflaketask(screenWidth.value) } }
 
+    val processedTasks = remember(userTasks) {
+        userTasks.map { task ->
+            if ((task.status.equals("Pendiente", ignoreCase = true) ||
+                        task.status.equals("En progreso", ignoreCase = true)) &&
+                isTaskOverdue(task.dueDate)) {
+                task.copy(status = "No hecha")
+            } else {
+                task
+            }
+        }
+    }
+
+    val filteredTasks = remember(userTasks, selectedFilter) {
+        filterTasks(userTasks, selectedFilter).also { filtered ->
+            Log.d("TaskFilter", "Filtro: $selectedFilter, Tareas mostradas: ${filtered.size}")
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchUserTasks()
@@ -143,7 +154,7 @@ fun TaskListScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .background(Color(0xFF59C0EF).copy(alpha = 0.9f)),
+                    .background(Color(0xFF4EB1CB).copy(alpha = 0.9f)),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -166,6 +177,50 @@ fun TaskListScreen(navController: NavController) {
                 }
             }
 
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = !expanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedFilter,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Mostrar tareas por:") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF4EB1CB),
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        filterOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    selectedFilter = option
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -200,14 +255,20 @@ fun TaskListScreen(navController: NavController) {
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(userTasks) { task ->
+                    items(filterTasks(processedTasks, selectedFilter)) { task ->
+                        val isOverdue = isTaskOverdue(task.dueDate) &&
+                                !task.status.equals("Completada", ignoreCase = true)
+
                         TaskItem(
                             task = task,
-                            onDelete = { viewModel.deleteUserTask(it) },
+                            onDelete = { if (!isOverdue) viewModel.deleteUserTask(it) },
                             onEdit = {
-                                taskSelected = task
-                                showDialog   = true
-                            }
+                                if (!isOverdue) {
+                                    taskSelected = task
+                                    showDialog = true
+                                }
+                            },
+                            isOverdue = isOverdue
                         )
                     }
                 }
@@ -248,6 +309,29 @@ fun TaskListScreen(navController: NavController) {
 }
 
 
+// Auxiliary function to verify if a task is overdue
+fun isTaskOverdue(dueDate: String?): Boolean {
+    if (dueDate.isNullOrEmpty()) return false
+    return try {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dueDateObj = dateFormat.parse(dueDate)
+        val currentDate = Date(System.currentTimeMillis())
+        dueDateObj.before(currentDate)
+    } catch (e: Exception) {
+        false
+    }
+}
+
+// Filtering function
+fun filterTasks(tasks: List<UserTask>, filter: String): List<UserTask> {
+    return when (filter) {
+        "Pendientes" -> tasks.filter { it.status.equals("Pendiente", ignoreCase = true) }
+        "Completadas" -> tasks.filter { it.status.equals("Completada", ignoreCase = true) }
+        "No hechas" -> tasks.filter { it.status.equals("No hecha", ignoreCase = true) }
+        "En progreso" -> tasks.filter { it.status.equals("En progreso", ignoreCase = true) }
+        else -> tasks // "All"
+    }
+}
 
 
 @Composable
@@ -329,7 +413,7 @@ fun CloudBackground() {
     val density = LocalDensity.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         with(density) {
-            val cloudColor = Color(0xFF59C0EF)
+            val cloudColor = Color(0xFF4EB1CB)
             val cloudRadius = 50.dp.toPx()
             val height = size.height
             val width = size.width
@@ -399,7 +483,7 @@ fun CustomIconButton(
             .height(60.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF59C0EF),
+            containerColor = Color(0xFF4EB1CB),
             contentColor = Color.White
         ),
         elevation = ButtonDefaults.buttonElevation(
@@ -442,30 +526,12 @@ fun CustomIconButton(
 
 
 @Composable
-fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
-
-    val isOverdue = remember {
-        if (task.dueDate.isNullOrEmpty()) false
-        else {
-            try {
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val dueDate = dateFormat.parse(task.dueDate)
-                val currentDate = System.currentTimeMillis()
-                dueDate != null &&
-                        dueDate.time < currentDate &&
-                        !task.status.equals("Completada", ignoreCase = true)
-            } catch (e: Exception) {
-                false
-            }
-        }
-    }
-
-
+fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit, isOverdue: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(25.dp))
-            .background(Color(0xFF2AACF3))
+            .background(Color(0xFF4EB1CB))
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -477,7 +543,6 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )
-
 
         Box(
             modifier = Modifier
@@ -509,24 +574,26 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
                 else ->
                     Icon(
                         imageVector = Icons.Default.AvTimer,
-                        contentDescription = "En proceso",
+                        contentDescription = "En progreso",
                         tint = Color.White
                     )
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
+
         IconButton(
             onClick = onEdit,
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(if (isOverdue) Color.Gray else Color.White),
+            enabled = !isOverdue
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Editar",
-                tint = Color(0xFF2AACF3)
+                tint = if (isOverdue) Color.LightGray else Color(0xFF4EB1CB)
             )
         }
     }
@@ -773,3 +840,7 @@ fun DialogEditTaskUser(
 fun TaskListScreenPreview() {
     TaskListScreen(navController = rememberNavController())
 }
+
+
+
+
