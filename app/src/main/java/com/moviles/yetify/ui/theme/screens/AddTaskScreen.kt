@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
@@ -33,8 +32,11 @@ import java.util.*
 import com.moviles.yetify.models.Course
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 import android.util.Log
+import androidx.annotation.RequiresApi
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,8 +67,21 @@ fun AddTaskScreen(navController: NavController) {
 
     fun formatDateToISO(input: String): String {
         val parts = input.split("/")
-        return "${parts[2]}-${parts[1]}-${parts[0]}T00:00:00"
+        val day = parts[0].toInt()
+        val month = parts[1].toInt() - 1 // Calendar usa 0-based months
+        val year = parts[2].toInt()
+
+        val calendar = Calendar.getInstance()
+        calendar.set(year, month, day, 0, 0, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+
+        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        isoFormat.timeZone = TimeZone.getDefault()
+
+        return isoFormat.format(calendar.time)
     }
+
+
 
 
     LaunchedEffect(Unit) {

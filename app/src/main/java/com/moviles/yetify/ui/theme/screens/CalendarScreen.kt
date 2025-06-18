@@ -42,7 +42,8 @@ import java.util.Locale
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Icon
-
+//import com.google.type.TimeZone
+import java.util.TimeZone
 
 
 @Composable
@@ -161,11 +162,13 @@ fun calendarUserTask(
                                 set(Calendar.DAY_OF_MONTH, counter)
                             }
                             val cellDate = cal.time
+                            val localCalendar = Calendar.getInstance(TimeZone.getDefault())
+                            val localDate = localCalendar.time
 
                             CalendarDayItem(
                                 day          = counter,
                                 calendarDate = cellDate,
-                                localDate    = Date(),
+                                localDate    = localDate,
                                 tasks        = list,
                                 isFromCurrentMonth = (phase == 2),
                                 modifier     = Modifier.weight(1f)
@@ -236,7 +239,11 @@ fun CalendarDayItem(
     isFromCurrentMonth: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
+        timeZone = TimeZone.getTimeZone("America/Costa_Rica")
+    }
+
+
     val today = Date()
 
 
@@ -272,7 +279,8 @@ fun CalendarDayItem(
 
     val labelText = when {
         hasCompleted  -> "Completada"
-        hasInProgress -> "En\nprogreso"
+        hasOverdue   -> "No hecha"
+        hasInProgress -> "Progreso"
         hasPending    -> "Pendiente"
         else          -> ""
     }
@@ -306,15 +314,15 @@ fun CalendarDayItem(
             )
         }
 
-        if (hasOverdue) {
-            Text(
-                text = "No hecha",
-                fontSize = 8.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Red,
-                textAlign = TextAlign.Center
-            )
-        }
+//        if (hasOverdue) {
+//            Text(
+//                text = "No hecha",
+//                fontSize = 8.sp,
+//                fontWeight = FontWeight.Bold,
+//                color = Color.Red,
+//                textAlign = TextAlign.Center
+//            )
+//        }
     }
 }
 

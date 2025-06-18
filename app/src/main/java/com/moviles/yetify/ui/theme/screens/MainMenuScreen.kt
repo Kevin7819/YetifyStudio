@@ -56,7 +56,7 @@ fun MainMenuScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(280.dp)
-                    .background(Color(0xFF59C0EF)),
+                    .background(Color(0xFF4EB1CB)),
                 contentAlignment = Alignment.Center
             ) {
                 val density = LocalDensity.current
@@ -212,7 +212,7 @@ fun CloudBackgroundMain() {
     val density = LocalDensity.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         with(density) {
-            val cloudColor = Color(0xFF59C0EF)
+            val cloudColor = Color(0xFF4EB1CB)
             val cloudRadius = 50.dp.toPx()
             val height = size.height
             val width = size.width
@@ -282,7 +282,7 @@ fun CustomIconButtonMain(
             .height(60.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF59C0EF),
+            containerColor = Color(0xFF4EB1CB),
             contentColor = Color.White
         ),
         elevation = ButtonDefaults.buttonElevation(
