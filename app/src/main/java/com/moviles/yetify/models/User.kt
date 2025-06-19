@@ -9,7 +9,6 @@ data class User(
     val id: Int,                        // Unique user identifier
     val userName: String,              // Display name
     val email: String,                 // User's email address
-    val role: String,                  // User's role (e.g., Admin, User)
     val birthday: String,              // Date of birth (as ISO string, e.g., "2000-01-01")
     val registrationDate: String,      // Date the user registered (also ISO format)
     val token: String                  // JWT token received from login (manually added)
