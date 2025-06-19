@@ -55,6 +55,13 @@ dependencies {
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.protolite.well.known.types)
+
+
+    implementation(libs.firebase.messaging.ktx)
+    implementation("com.google.firebase:firebase-analytics")
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
