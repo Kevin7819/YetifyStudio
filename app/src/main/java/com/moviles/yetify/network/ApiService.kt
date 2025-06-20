@@ -9,6 +9,7 @@ import com.moviles.yetify.models.RegisterRequest
 import com.moviles.yetify.models.ResetPasswordRequest
 import com.moviles.yetify.models.UserTask
 import com.moviles.yetify.viewmodel.UserTaskViewModel
+import com.moviles.yetify.models.User
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -61,4 +62,7 @@ interface ApiService {
 
     @POST("/api/Auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<ApiResponse>
+
+    @GET("api/User/{id}")
+    suspend fun getUserById(@Path("id") id: Int): User
 }

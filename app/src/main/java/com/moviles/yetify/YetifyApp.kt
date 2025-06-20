@@ -1,17 +1,14 @@
 package com.moviles.yetify
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.moviles.yetify.ui.theme.screens.*
 import com.moviles.yetify.viewmodel.AuthViewModel
+import com.moviles.yetify.datastore.UserPreferences
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Root composable for the Yetify application.
@@ -26,6 +23,10 @@ fun YetifyApp() {
 
     // Instance of the authentication ViewModel
     val authViewModel: AuthViewModel = viewModel()
+
+    // Instance of UserPreferences to retrieve stored user data
+    val context = LocalContext.current
+    val userPreferences = remember { UserPreferences(context) }
 
     // Navigation host defining all available routes/screens
     NavHost(
@@ -154,7 +155,14 @@ fun YetifyApp() {
                 onActivitiesClick = { /* TODO: Navigate to activities screen */ },
                 onProgressClick = { /* TODO: Navigate to progress screen */ },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
-                onReadingsClick = { /* TODO: Navigate to readings screen */ }
+                onReadingsClick = { /* TODO: Navigate to readings screen */ },
+                onLogout = {
+                    // Clear back stack and return to welcome screen
+                    navController.navigate("welcome") {
+                        popUpTo("main") { inclusive = true }
+                    }
+                },
+                userPreferences = userPreferences
             )
         }
 
