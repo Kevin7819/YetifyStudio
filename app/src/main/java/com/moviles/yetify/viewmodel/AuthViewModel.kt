@@ -77,19 +77,25 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
                 if (response.isSuccessful) {
                     // Parse response body safely
+                    Log.i("AuthViewModel", "Successful response")
                     response.body()?.let { apiResponse ->
                         val user = apiResponse.user
 
                         // Save user info in ViewModel state and preferences
                         userId = user.id
                         isAuthenticated = true
-                        prefs.saveUser(user.id, user.token)
 
                         // Emit success state with user data
                         _loginResult.value = LoginResult.Success(user)
+                        prefs.saveToken(user.token)
+
+                        val userResponse = RetrofitInstance.api.getUserById(userId!!)
+
+                        prefs.saveUser(userResponse)
 
                         // Debug logs for verification
                         Log.i("AuthViewModel", "Saved user id: ${prefs.userId.first()}")
+                        Log.i("AuthViewModel", "Saved username: ${prefs.userName.first()}")
                         Log.i("AuthViewModel", "Saved token: ${prefs.token.first()}")
                         Log.i("AuthViewModel", "Login success. User: $user")
                     } ?: run {
