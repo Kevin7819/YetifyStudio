@@ -5,6 +5,7 @@ import com.moviles.yetify.models.ForgotPasswordRequest
 import com.moviles.yetify.models.LoginApiResponse
 import com.moviles.yetify.models.LoginRequest
 import com.moviles.yetify.models.LoginResponse
+import com.moviles.yetify.models.RegisterRequest
 import com.moviles.yetify.models.ResetPasswordRequest
 import com.moviles.yetify.models.UserTask
 import com.moviles.yetify.viewmodel.UserTaskViewModel
@@ -57,4 +58,7 @@ interface ApiService {
 
     @POST("/api/Auth/reset-password")
     suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<ApiResponse>
+
+    @POST("/api/Auth/register")
+    suspend fun register(@Body request: RegisterRequest): Response<ApiResponse>
 }

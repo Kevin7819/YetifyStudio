@@ -71,6 +71,7 @@ fun WelcomeScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Botón para iniciar sesión
                 Button(
                     onClick = onLoginClick,
                     modifier = Modifier
@@ -95,6 +96,7 @@ fun WelcomeScreen(
 
                 Spacer(modifier = Modifier.height(26.dp))
 
+                // Botón para crear cuenta (registro)
                 Button(
                     onClick = onCreateAccountClick,
                     modifier = Modifier
@@ -104,7 +106,7 @@ fun WelcomeScreen(
                         containerColor = Color.White
                     ),
                     shape = RoundedCornerShape(50),
-                    border = BorderStroke(2.dp, Color(0xFF4EB1CB)), // Puedes cambiar el color si usas otro para "Crear cuenta"
+                    border = BorderStroke(2.dp, Color(0xFF4EB1CB)),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
                     Text(
@@ -116,7 +118,6 @@ fun WelcomeScreen(
                         )
                     )
                 }
-
             }
         }
     }
