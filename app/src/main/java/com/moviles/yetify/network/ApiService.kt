@@ -64,5 +64,8 @@ interface ApiService {
     suspend fun getListBooks():List<Book>
 
     @GET("api/Books/{id}")
-    suspend fun getBook():Book?
+    suspend fun getBook(@Path("id") bookId: Int):Book?
+
+    @GET("api/Books/search/{search}")
+    suspend fun getSearchBook(@Path("search") bookId: String):List<Book>
 }
