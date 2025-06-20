@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moviles.yetify.models.UserTask
+import com.moviles.yetify.models.Course
 import com.moviles.yetify.viewmodel.UserTaskViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -90,18 +91,26 @@ import kotlin.math.cos
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(navController: NavController) {
+    // Gets the ViewModel using the viewModel() function
     val viewModel: UserTaskViewModel = viewModel()
+    // Collects the status of user tasks as a State
     val userTasks by viewModel.userTasks.collectAsState()
+    // Collect the status of the courses as a State.
+    val courses by viewModel.courses.collectAsState()
 
     var selectedFilter by remember { mutableStateOf("Todas") }
+    var selectedCourse by remember { mutableStateOf<Course?>(null) }
+    var courseExpanded by remember { mutableStateOf(false) }
+    // Available options for filtering
     val filterOptions = listOf("Todas", "Pendientes", "Completadas", "No hechas", "En progreso")
-    var expanded by remember { mutableStateOf(false) }
+    var filterExpanded by remember { mutableStateOf(false) }
 
-    var showDialog   by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
     var taskSelected by remember { mutableStateOf<UserTask?>(null) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val snowflakes  = remember { List(15) { createSnowflaketask(screenWidth.value) } }
+    val snowflakes = remember { List(15) { createSnowflaketask(screenWidth.value) } }
 
+    // Processes the tasks to mark the overdue ones
     val processedTasks = remember(userTasks) {
         userTasks.map { task ->
             if ((task.status.equals("Pendiente", ignoreCase = true) ||
@@ -114,17 +123,26 @@ fun TaskListScreen(navController: NavController) {
         }
     }
 
-    val filteredTasks = remember(userTasks, selectedFilter) {
-        filterTasks(userTasks, selectedFilter).also { filtered ->
-            Log.d("TaskFilter", "Filtro: $selectedFilter, Tareas mostradas: ${filtered.size}")
+    // Filter the tasks according to the selected criteria
+    val filteredTasks = remember(processedTasks, selectedFilter, selectedCourse) {
+        var filtered = filterTasks(processedTasks, selectedFilter)
+
+        if (selectedCourse != null) {
+            filtered = filtered.filter { it.idCourse == selectedCourse?.id }
+        }
+
+        filtered.also { filtered ->
+            Log.d("TaskFilter", "Filtro: $selectedFilter, Curso: ${selectedCourse?.nameCourse}, Tareas mostradas: ${filtered.size}")
         }
     }
 
+    // Effect to load initial data when starting the screen
     LaunchedEffect(Unit) {
         viewModel.fetchUserTasks()
+        viewModel.fetchCourses()
     }
 
-
+    // Effect to update tasks when dialog is closed
     LaunchedEffect(showDialog) {
         if (!showDialog) {
             viewModel.fetchUserTasks()
@@ -136,7 +154,6 @@ fun TaskListScreen(navController: NavController) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-
         CloudBackground()
         Box(
             modifier = Modifier
@@ -149,7 +166,6 @@ fun TaskListScreen(navController: NavController) {
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -177,21 +193,23 @@ fun TaskListScreen(navController: NavController) {
                 }
             }
 
+            // ComboBox to select course
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp)
             ) {
+                // Drop-down menu for courses
                 ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
+                    expanded = courseExpanded,
+                    onExpandedChange = { courseExpanded = !courseExpanded }
                 ) {
                     OutlinedTextField(
-                        value = selectedFilter,
+                        value = selectedCourse?.nameCourse ?: "Todos los cursos",
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Mostrar tareas por:") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        label = { Text("Filtrar por curso:") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(courseExpanded) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
@@ -206,15 +224,69 @@ fun TaskListScreen(navController: NavController) {
                     )
 
                     ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                        expanded = courseExpanded,
+                        onDismissRequest = { courseExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Todos los cursos") },
+                            onClick = {
+                                selectedCourse = null // Reset selection
+                                courseExpanded = false
+                            }
+                        )
+
+                        courses.forEach { course ->
+                            DropdownMenuItem(
+                                text = { Text(course.nameCourse) },
+                                onClick = {
+                                    selectedCourse = course
+                                    courseExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ComboBox to select status filter
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = filterExpanded,
+                    onExpandedChange = { filterExpanded = !filterExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedFilter,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Mostrar tareas por estado:") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(filterExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF4EB1CB),
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = filterExpanded,
+                        onDismissRequest = { filterExpanded = false }
                     ) {
                         filterOptions.forEach { option ->
                             DropdownMenuItem(
                                 text = { Text(option) },
                                 onClick = {
                                     selectedFilter = option
-                                    expanded = false
+                                    filterExpanded = false
                                 }
                             )
                         }
@@ -250,12 +322,11 @@ fun TaskListScreen(navController: NavController) {
                         modifier = Modifier.width(80.dp))
                 }
 
-
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(filterTasks(processedTasks, selectedFilter)) { task ->
+                    items(filteredTasks) { task ->
                         val isOverdue = isTaskOverdue(task.dueDate) &&
                                 !task.status.equals("Completada", ignoreCase = true)
 
@@ -275,7 +346,6 @@ fun TaskListScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-
                 CustomIconButton(
                     text = "Volver",
                     icon = Icons.Default.ArrowBack,
@@ -285,22 +355,21 @@ fun TaskListScreen(navController: NavController) {
             }
         }
 
-
         if (showDialog) {
             DialogEditTaskUser(
                 task = taskSelected,
                 onConfirm = { updatedTask ->
                     viewModel.updateUserTask(updatedTask)
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 },
                 onDismiss = {
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 },
                 onDelete = { id ->
                     viewModel.deleteUserTask(id)
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 }
             )
@@ -308,8 +377,8 @@ fun TaskListScreen(navController: NavController) {
     }
 }
 
-
-// Auxiliary function to verify if a task is overdue
+// Check if a task is overdue by comparing its due date with the current one.
+//Boolean true if task is overdue, false otherwise
 fun isTaskOverdue(dueDate: String?): Boolean {
     if (dueDate.isNullOrEmpty()) return false
     return try {
@@ -322,14 +391,14 @@ fun isTaskOverdue(dueDate: String?): Boolean {
     }
 }
 
-// Filtering function
+//Filters a list of tasks according to the selected status.
 fun filterTasks(tasks: List<UserTask>, filter: String): List<UserTask> {
     return when (filter) {
         "Pendientes" -> tasks.filter { it.status.equals("Pendiente", ignoreCase = true) }
         "Completadas" -> tasks.filter { it.status.equals("Completada", ignoreCase = true) }
         "No hechas" -> tasks.filter { it.status.equals("No hecha", ignoreCase = true) }
         "En progreso" -> tasks.filter { it.status.equals("En progreso", ignoreCase = true) }
-        else -> tasks // "All"
+        else -> tasks // "Todas"
     }
 }
 
@@ -524,9 +593,10 @@ fun CustomIconButton(
     }
 }
 
-
+// Component representing an individual task item
 @Composable
 fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit, isOverdue: Boolean) {
+    // Row containing all the information of the task
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -536,6 +606,7 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit, isOver
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        // Text with the task descriptionHaz clic para usar esta alternativa
         Text(
             text = task.description,
             color = Color.White,
@@ -543,7 +614,7 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit, isOver
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )
-
+        // Visual status indicator
         Box(
             modifier = Modifier
                 .size(40.dp)
