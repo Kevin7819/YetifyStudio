@@ -142,32 +142,81 @@ fun HomeScreen(
             }
         }
 
+        // Nuevo LogoutDialog con estilo visual moderno
         AnimatedVisibility(
             visible = showSettingsDialog,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            AlertDialog(
-                onDismissRequest = { showSettingsDialog = false },
-                confirmButton = {
-                    TextButton(onClick = {
-                        showSettingsDialog = false
-                        onLogout()
-                    }) {
-                        Text("Cerrar sesión", color = Color.Red, fontWeight = FontWeight.Bold)
-                    }
+            LogoutDialog(
+                onLogout = {
+                    showSettingsDialog = false
+                    onLogout()
                 },
-                dismissButton = {
-                    TextButton(onClick = { showSettingsDialog = false }) {
-                        Text("Cancelar")
-                    }
-                },
-                title = { Text("Ajustes", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-                text = { Text("¿Deseas cerrar sesión de tu cuenta?") },
-                containerColor = Color(0xFFFFF8E1)
+                onDismiss = { showSettingsDialog = false }
             )
         }
     }
+}
+
+@Composable
+private fun LogoutDialog(
+    onLogout: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = Color(0xFFE1F5FE),
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = "Cerrar sesión",
+                    modifier = Modifier.size(48.dp),
+                    tint = Color(0xFFD32F2F)
+                )
+                Text(
+                    text = "Cerrar sesión",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFD32F2F)
+                    ),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        },
+        text = {
+            Text(
+                "¿Estás seguro de que deseas cerrar sesión de tu cuenta?",
+                color = Color(0xFF212121),
+                fontSize = 16.sp,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onLogout,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD32F2F),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cerrar sesión")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancelar", color = Color(0xFF1976D2))
+            }
+        }
+    )
 }
 
 @Composable

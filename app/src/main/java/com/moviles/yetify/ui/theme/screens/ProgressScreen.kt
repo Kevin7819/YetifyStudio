@@ -75,7 +75,7 @@ fun ProgressScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (selectedTab == 1) Color(0xFF77BFD7) else Color(0xFFE3F2FD))
+            .background(if (selectedTab == 1) Color(0xFF77BFD7) else Color(0xFF4EB1CB))
     ) {
         // ❄️ Copos de nieve decorativos (solo en Materias)
         if (selectedTab == 0) {
@@ -108,30 +108,30 @@ fun ProgressScreen(
 
             Text(
                 "Mi progreso",
-                fontSize = 28.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (selectedTab == 1) Color.White else Color(0xFF1565C0),
+                color = Color.White,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Text(
                 "¡Sigue así, vas muy bien! 🚀",
                 fontSize = 18.sp,
-                color = if (selectedTab == 1) Color.White else Color(0xFF1976D2),
+                color = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
             // Mensaje si no hay tareas o cursos
             if (userTasks.isEmpty()) {
-                Text("No hay tareas registradas.", color = Color.Red, fontWeight = FontWeight.Bold)
+                Text("No hay tareas registradas.", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
             }
             if (courses.isEmpty()) {
-                Text("No hay materias registradas.", color = Color.Red, fontWeight = FontWeight.Bold)
+                Text("No hay materias registradas.", color = Color(0xFFD32F2F), fontWeight = FontWeight.Bold)
             }
 
             // 🔷 2. Sección de tareas completadas
             Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = if (selectedTab == 1) Color.White else Color(0xFFBBDEFB)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 modifier = Modifier.padding(vertical = 8.dp)
             ) {
                 Row(
@@ -141,15 +141,15 @@ fun ProgressScreen(
                     Icon(
                         Icons.Default.CheckCircle,
                         contentDescription = "Completadas",
-                        tint = if (selectedTab == 1) Color(0xFF1976D2) else Color(0xFF43A047),
+                        tint = Color(0xFF43A047),
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
                         text = "$completedTasks Tareas completadas",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = if (selectedTab == 1) Color(0xFF1976D2) else Color(0xFF1565C0)
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1976D2)
                     )
                 }
             }
@@ -169,8 +169,9 @@ fun ProgressScreen(
                             Text(
                                 title,
                                 color = if (selectedTab == i && selectedTab == 1) Color(0xFFE91E63)
-                                else if (selectedTab == i) Color(0xFF1565C0)
-                                else Color.White
+                                else if (selectedTab == i) Color(0xFF1976D2)
+                                else Color.White,
+                                fontWeight = if (selectedTab == i) FontWeight.Bold else FontWeight.Normal
                             )
                         },
                         modifier = Modifier
@@ -183,7 +184,7 @@ fun ProgressScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
 
             // Contenido de los tabs
             if (selectedTab == 0) {
@@ -197,55 +198,65 @@ fun ProgressScreen(
                     Icon(
                         Icons.Default.EmojiEvents,
                         contentDescription = "Trophy",
-                        tint = Color(0xFF1976D2),
+                        tint = Color(0xFFFFB300),
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         "Progreso por materia",
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1976D2),
+                        color = Color.White,
                         fontSize = 20.sp
                     )
                 }
 
                 // Lista de materias con barras de progreso
-                Column(
-                    Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    progressByCourse.toList().forEachIndexed { idx, (course, percent) ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Text(
-                                course,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF1976D2),
-                                fontSize = 16.sp
-                            )
-                            LinearProgressIndicator(
-                                progress = percent / 100f,
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        progressByCourse.toList().forEachIndexed { idx, (course, percent) ->
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(12.dp)
-                                    .clip(RoundedCornerShape(6.dp)),
-                                color = when (idx % 4) {
-                                    0 -> Color(0xFF42A5F5)
-                                    1 -> Color(0xFF66BB6A)
-                                    2 -> Color(0xFFFFA726)
-                                    else -> Color(0xFFAB47BC)
-                                },
-                                trackColor = Color(0xFFBBDEFB)
-                            )
-                            Text(
-                                "$percent%",
-                                fontSize = 14.sp,
-                                color = Color(0xFF1565C0),
-                                modifier = Modifier.align(Alignment.End)
-                            )
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                Text(
+                                    course,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF1976D2),
+                                    fontSize = 16.sp
+                                )
+                                LinearProgressIndicator(
+                                    progress = percent / 100f,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(14.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    color = when (idx % 4) {
+                                        0 -> Color(0xFF42A5F5)
+                                        1 -> Color(0xFF66BB6A)
+                                        2 -> Color(0xFFFFA726)
+                                        else -> Color(0xFFAB47BC)
+                                    },
+                                    trackColor = Color(0xFFBBDEFB)
+                                )
+                                Text(
+                                    "$percent%",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF1565C0),
+                                    modifier = Modifier.align(Alignment.End)
+                                )
+                            }
                         }
                     }
                 }
@@ -253,7 +264,7 @@ fun ProgressScreen(
                 // 🧮 Distribución de actividades con PieCharts
                 Text(
                     "Distribución de actividades",
-                    color = Color(0xFF1976D2),
+                    color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -274,28 +285,37 @@ fun ProgressScreen(
                 )
                 val courseList = progressByCourse.toList()
 
-                Column(
-                    Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
-                    courseList.chunked(2).forEachIndexed { rowIdx, rowCourses ->
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            rowCourses.forEachIndexed { colIdx, (course, percent) ->
-                                PieChart(
-                                    percentage = percent,
-                                    color = pieColors[(rowIdx * 2 + colIdx) % pieColors.size],
-                                    label = course
-                                )
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        courseList.chunked(2).forEachIndexed { rowIdx, rowCourses ->
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                rowCourses.forEachIndexed { colIdx, (course, percent) ->
+                                    PieChart(
+                                        percentage = percent,
+                                        color = pieColors[(rowIdx * 2 + colIdx) % pieColors.size],
+                                        label = course
+                                    )
+                                }
+                                if (rowCourses.size == 1) {
+                                    Spacer(Modifier.width(80.dp))
+                                }
                             }
-                            // Si la fila tiene solo un elemento, agrega un Spacer para alinear
-                            if (rowCourses.size == 1) {
-                                Spacer(Modifier.width(80.dp))
-                            }
+                            Spacer(Modifier.height(16.dp))
                         }
-                        Spacer(Modifier.height(16.dp))
                     }
                 }
 
@@ -370,7 +390,8 @@ fun ProgressScreen(
             if (selectedTab == 0) {
                 Button(
                     onClick = { navController.popBackStack() },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
@@ -400,7 +421,7 @@ fun PieChart(
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawArc(
-                    color = Color.LightGray,
+                    color = Color(0xFFE0E0E0),
                     startAngle = 0f,
                     sweepAngle = 360f,
                     useCenter = true
@@ -414,14 +435,14 @@ fun PieChart(
             }
             Text(
                 "$percentage%",
-                color = Color.Black,
+                color = Color(0xFF1976D2),
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )
         }
         Text(
             label,
-            color = Color.White,
+            color = Color(0xFF1976D2),
             fontWeight = FontWeight.Medium,
             fontSize = 14.sp,
             modifier = Modifier.padding(top = 4.dp)

@@ -72,6 +72,9 @@ fun YetifyApp() {
                 },
                 onForgotPasswordClick = {
                     navController.navigate("forgot_password") // Navigate to forgot password screen
+                },
+                onCreateAccountClick = {
+                    navController.navigate("register")
                 }
             )
         }
@@ -170,14 +173,10 @@ fun YetifyApp() {
         composable("main") {
             HomeScreen(
 
-                onActivitiesClick = { /* navController.navigate("activities") */ },
-                onProgressClick = { /* navController.navigate("progress") */ },
-                onTasksClick = { navController.navigate("tasks") },
-                onReadingsClick = {  navController.navigate("readings")  }
+                onReadingsClick = {  navController.navigate("readings")  },
                 onActivitiesClick = {navController.navigate("trivia_categories")},
                 onProgressClick = { navController.navigate("progress") },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
-                onReadingsClick = { /* TODO: Navigate to readings screen */ },
                 onLogout = {
                     // Clear back stack and return to welcome screen
                     navController.navigate("welcome") {
