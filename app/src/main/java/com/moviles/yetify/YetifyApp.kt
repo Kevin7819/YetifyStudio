@@ -1,12 +1,23 @@
 package com.moviles.yetify
 
+
+import android.util.Log
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+
 import androidx.compose.runtime.*
+
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import com.moviles.yetify.models.Book
 import com.moviles.yetify.ui.theme.screens.*
 import com.moviles.yetify.viewmodel.AuthViewModel
+import com.moviles.yetify.viewmodel.BookViewModel
 import com.moviles.yetify.datastore.UserPreferences
 import androidx.compose.ui.platform.LocalContext
 
@@ -24,11 +35,17 @@ fun YetifyApp() {
     // Instance of the authentication ViewModel
     val authViewModel: AuthViewModel = viewModel()
 
+
+    //book view Model
+    val bookviewmodel: BookViewModel = viewModel()
+
+
     // Instance of UserPreferences to retrieve stored user data
     val context = LocalContext.current
     val userPreferences = remember { UserPreferences(context) }
 
     // Navigation host defining all available routes/screens
+
     NavHost(
         navController = navController,
         startDestination = "welcome" // Initial screen when the app starts
@@ -152,6 +169,11 @@ fun YetifyApp() {
         // -------------------- Main Home Screen --------------------
         composable("main") {
             HomeScreen(
+
+                onActivitiesClick = { /* navController.navigate("activities") */ },
+                onProgressClick = { /* navController.navigate("progress") */ },
+                onTasksClick = { navController.navigate("tasks") },
+                onReadingsClick = {  navController.navigate("readings")  }
                 onActivitiesClick = {navController.navigate("trivia_categories")},
                 onProgressClick = { navController.navigate("progress") },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
@@ -184,6 +206,54 @@ fun YetifyApp() {
         ) { backStackEntry ->
             val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 17
             TriviaQuestionScreen(navController, categoryId)
+        }
+        // book activities
+        composable("readings") {
+            ScreenListBooks(
+                onClickBack = {
+                    navController.navigate("main")
+                },
+                onClickBook = {book: Book ->
+                    navController.navigate("detailScreen/${book.id}")
+                },
+                bookviewmodel = bookviewmodel
+            )
+        }
+        composable(
+            route = "detailScreen/{bookId}",
+            arguments = listOf(navArgument("bookId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getInt("bookId")
+            bookId?.let {
+                ScreenBookReader(
+                    id = it,
+                    onClickBack = { navController.navigate("readings") },
+                    bookviewmodel = bookviewmodel,
+                    onComplete = {book:Book?->
+                        navController.navigate("readbookcomplete/${book?.id}")
+                    }
+                )
+            } ?: run {
+                navController.navigate("main")
+                //Text("Error: Book ID missing")
+            }
+        }
+        composable(route="readbookcomplete/{bookId}",
+                arguments = listOf(navArgument("bookId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getInt("bookId")
+            bookId?.let {
+                Log.i("yetify","bookid ${bookId}")
+                ScreenCompleteDialog(
+                    onClickBack = {navController.navigate("readings")},
+                    onClickHome = {navController.navigate("main")},
+                    onClickStats = {navController.navigate("main")},
+                    onClickReset = {navController.navigate("detailScreen/${bookId}")}
+                )
+            } ?: run {
+                navController.navigate("main")
+                //Text("Error: Book ID missing")
+            }
         }
     }
 }
