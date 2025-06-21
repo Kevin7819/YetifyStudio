@@ -54,4 +54,12 @@ object RetrofitInstance {
             .build()
             .create(ApiService::class.java)
     }
+
+    val triviaApi: TriviaApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://the-trivia-api.com/v2/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TriviaApiService::class.java)
+    }
 }

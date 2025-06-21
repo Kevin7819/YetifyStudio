@@ -1,6 +1,12 @@
 package com.moviles.yetify
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
@@ -152,7 +158,7 @@ fun YetifyApp() {
         // -------------------- Main Home Screen --------------------
         composable("main") {
             HomeScreen(
-                onActivitiesClick = { /* TODO: Navigate to activities screen */ },
+                onActivitiesClick = {navController.navigate("activities")},
                 onProgressClick = { /* TODO: Navigate to progress screen */ },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
                 onReadingsClick = { /* TODO: Navigate to readings screen */ },
@@ -169,6 +175,47 @@ fun YetifyApp() {
         // -------------------- Internal Task Navigation --------------------
         composable("tasks") {
             AppNavigation() // Load task-related internal navigation
+        }
+        
+        // -------------------- Activities Screen --------------------
+        composable("activities") {
+            ActivitiesScreen(
+                onTriviaClick = { navController.navigate("categories") },
+                onAudiobooksClick = { navController.navigate("audiobooks") }
+            )
+        }
+        composable("categories") {
+        val triviaViewModel: TriviaViewModel = viewModel()
+        val questions by triviaViewModel.questions.collectAsState()
+        val loading by triviaViewModel.loading.collectAsState()
+        var selectedCategory by remember { mutableStateOf<String?>(null) }
+    
+        // Cuando seleccionas una categoría, solo llamas a fetchQuestions
+        TriviaCategoriesScreen { category ->
+            selectedCategory = category
+            triviaViewModel.fetchQuestions(category)
+        }
+    
+        // Cuando las preguntas llegan, navega automáticamente
+        LaunchedEffect(questions, loading) {
+            if (!loading && questions.isNotEmpty() && selectedCategory != null) {
+                navController.navigate("triviaGame")
+            }
+        }
+    }
+        // -------------------- Trivia Game Screen --------------------
+        composable("triviaGame") {
+            val triviaViewModel: TriviaViewModel = viewModel()
+            val questions by triviaViewModel.questions.collectAsState()
+            val loading by triviaViewModel.loading.collectAsState()
+            if (loading) {
+                androidx.compose.material3.CircularProgressIndicator()
+            } else {
+                TriviaGameScreen(
+                    questions = questions,
+                    onFinish = { navController.popBackStack("activities", false) }
+                )
+            }
         }
     }
 }
