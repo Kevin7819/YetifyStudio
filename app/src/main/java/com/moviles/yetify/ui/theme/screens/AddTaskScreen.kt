@@ -31,12 +31,7 @@ import com.moviles.yetify.viewmodel.UserTaskViewModel
 import java.util.*
 import com.moviles.yetify.models.Course
 import kotlinx.coroutines.launch
-import androidx.lifecycle.viewmodel.compose.viewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-
 import android.util.Log
-import androidx.annotation.RequiresApi
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -80,9 +75,6 @@ fun AddTaskScreen(navController: NavController) {
 
         return isoFormat.format(calendar.time)
     }
-
-
-
 
     LaunchedEffect(Unit) {
         viewModel.fetchCourses()
