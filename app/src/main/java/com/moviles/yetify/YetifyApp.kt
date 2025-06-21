@@ -152,7 +152,7 @@ fun YetifyApp() {
         // -------------------- Main Home Screen --------------------
         composable("main") {
             HomeScreen(
-                onActivitiesClick = { /* TODO: Navigate to activities screen */ },
+                onActivitiesClick = {navController.navigate("trivia_categories")},
                 onProgressClick = { navController.navigate("progress") },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
                 onReadingsClick = { /* TODO: Navigate to readings screen */ },
@@ -172,6 +172,18 @@ fun YetifyApp() {
         }
         composable("progress") { //
             ProgressScreen(navController)
+        }
+
+        //---------------------- Trivia navigation
+        composable("trivia_categories") {
+            TriviaCategoryScreen(navController)
+        }
+        composable(
+            "trivia/{categoryId}",
+            arguments = listOf(navArgument("categoryId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val categoryId = backStackEntry.arguments?.getInt("categoryId") ?: 17
+            TriviaQuestionScreen(navController, categoryId)
         }
     }
 }
