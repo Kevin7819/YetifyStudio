@@ -42,13 +42,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.moviles.yetify.viewmodel.BookViewModel
 
 @Preview(showSystemUi = true)
 @Composable
@@ -60,11 +69,105 @@ fun PreviewListBooks(){
         Book(id = 4, title = "El monstruo de colores", author = "Anna Llenas", content = null),
         Book(id = 5, title = "La pequeña oruga glotona", author = "Eric Carle", content = null)
     )
-    ListBooks(bookList = bookList, onBack = {}, onClickBook = {}, onClickSearch = {})
+    ShowListBooks(listBook = bookList, onClickBook = {}, onClickSearch = {})
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit){
+    val bookviewmodel:BookViewModel = viewModel()
+    val listbook by bookviewmodel.listBooks.collectAsState()
+
+    LaunchedEffect(Unit) {
+        bookviewmodel.fetchAllBooks()
+    }
+    ShowListBooks(
+        listBook = listbook,
+        onClickBook = onClickBook,
+        onClickSearch = {search->
+            bookviewmodel.getSearchBook(search)
+        }
+    )
+    ShowTopBar(onClickBack = onClickBack,13)
 }
 
 @Composable
-fun ListBooks(bookList: List<Book>,  onBack: () -> Unit, onClickSearch: () -> Unit, onClickBook: (Book) -> Unit) {
+fun ShowTopBar(
+    onClickBack: () -> Unit,
+    coins: Int
+) {
+    val backgroundColor = Color.Transparent
+    val iconAndTextColor = Color.White
+    val coinIconColor = Color(0xFFF0B03C)
+    val coinBackgroundColor = Color(0xFF42A6F5)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(70.dp)
+            .background(backgroundColor)
+            .padding(top = 30.dp, start = 10.dp, end = 10.dp, bottom = 10.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            // buttonBack
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+
+                IconButton(onClick = onClickBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = iconAndTextColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Volver",
+                    color = iconAndTextColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            //coins
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(coinBackgroundColor)
+                    .padding(vertical = 4.dp, horizontal = 12.dp)
+            ) {
+
+                Icon(
+                    //painter = painterResource(id = R.drawable.ic_coin), // Reemplaza con tu ID de recurso
+                    imageVector = Icons.Default.EmojiEvents,
+                    contentDescription = "Monedas",
+                    tint = coinIconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = coins.toString(),
+                    color = iconAndTextColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowListBooks(listBook: List<Book>, onClickSearch: (String) -> Unit, onClickBook: (Book) -> Unit) {
 
     Column(
         modifier = Modifier
@@ -115,7 +218,7 @@ fun ListBooks(bookList: List<Book>,  onBack: () -> Unit, onClickSearch: () -> Un
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(bookList) { book ->
+                    items(listBook) { book ->
                         BookCard(book, onClickBook = onClickBook)
                     }
                 }
@@ -141,7 +244,7 @@ fun ListBooks(bookList: List<Book>,  onBack: () -> Unit, onClickSearch: () -> Un
 }
 
 @Composable
-fun SearchBar(onClickSearch:()->Unit) {
+fun SearchBar(onClickSearch:(String)->Unit) {
     var searchText by remember { mutableStateOf("") }
 
     TextField(
@@ -161,12 +264,14 @@ fun SearchBar(onClickSearch:()->Unit) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Buscar",
-                tint = Color(0xFF2196F3)
+                tint = Color(0xFF2196F3),
+                modifier =Modifier.clickable {onClickSearch(searchText)}
             )
         },
         colors = TextFieldDefaults.colors(
             focusedTextColor =  Color(0xFF2196F3),
-            focusedContainerColor = Color(0xFF75C4FC),
+            focusedContainerColor = Color(0xCFDAE9FF),
+            unfocusedContainerColor = Color(0xCFDAE9FF),
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent
 
@@ -231,6 +336,7 @@ fun BookCard(book: Book, onClickBook:(Book)->Unit) {
                             .height(8.dp)
                             .clip(RoundedCornerShape(8.dp)),
                         color = Color.Green,
+                        trackColor = Color.White
                     )
                 }
                 Spacer(modifier = Modifier.width(5.dp))

@@ -68,7 +68,7 @@ fun HomeScreen(
                 )
             }
 
-            // Botones (cuatro en dos filas)
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

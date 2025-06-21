@@ -1,5 +1,6 @@
 package com.moviles.yetify
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -10,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.moviles.yetify.models.Book
 import com.moviles.yetify.ui.theme.screens.*
 import com.moviles.yetify.viewmodel.AuthViewModel
 
@@ -114,13 +116,38 @@ fun YetifyApp() {
                 onActivitiesClick = { /* navController.navigate("activities") */ },
                 onProgressClick = { /* navController.navigate("progress") */ },
                 onTasksClick = { navController.navigate("tasks") },
-                onReadingsClick = { /* navController.navigate("readings") */ }
+                onReadingsClick = {  navController.navigate("readings")  }
             )
         }
 
         // Tasks navigation
         composable("tasks") {
             AppNavigation()
+        }
+        // book activities
+        composable("readings") {
+            ScreenListBooks(
+                onClickBack = {
+                    navController.navigate("main")
+                },
+                onClickBook = {book: Book ->
+                    navController.navigate("detailScreen/${book.id}")
+                }
+            )
+        }
+        composable(
+            route = "detailScreen/{bookId}",
+            arguments = listOf(navArgument("bookId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val bookId = backStackEntry.arguments?.getInt("bookId")
+            bookId?.let {
+                ScreenBookReader(
+                    id = it,
+                    onClickBack = { navController.navigate("readings") }
+                )
+            } ?: run {
+                Text("Error: Book ID missing")
+            }
         }
     }
 }

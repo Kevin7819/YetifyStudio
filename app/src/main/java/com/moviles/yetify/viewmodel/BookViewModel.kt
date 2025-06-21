@@ -57,8 +57,12 @@ class BookViewModel(application: Application) : AndroidViewModel(application) {
     fun getSearchBook(search: String) {
         viewModelScope.launch {
             try {
-                val books = RetrofitInstance.api.getSearchBook(search)
-                _listBooks.value = books
+                if (search.isNotBlank()) {
+                    val books = RetrofitInstance.api.getSearchBook(search)
+                    _listBooks.value = books
+                }else {
+                    fetchAllBooks()
+                }
             } catch (e: Exception) {
                 Log.e("BookViewModel", "Error searching books for '$search': ${e.message}", e)
             }

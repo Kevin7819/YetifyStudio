@@ -10,24 +10,32 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moviles.yetify.models.Book
+import com.moviles.yetify.viewmodel.BookViewModel
 
 
 @Preview(showSystemUi = true)
@@ -62,13 +70,30 @@ fun PreviewReaderBook(){
                         
                     """.trimIndent()
     )
-    ShowReadBook(sampleBook, onComplete = {}, onBack = {})
+    ShowTopBar(onClickBack = {},13)
+    ShowReadBook(sampleBook, onComplete = {})
+
 }
+
 @Composable
-fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
+fun  ScreenBookReader(id:Int,onClickBack:()->Unit){
+    val bookviewmodel: BookViewModel = viewModel()
+    val book by bookviewmodel.book.collectAsState()
+
+    LaunchedEffect(Unit) {
+        bookviewmodel.getBookById(id)
+    }
+
+    ShowTopBar(onClickBack = onClickBack,12)
+    ShowReadBook(book, onComplete = {})
+}
+
+@Composable
+fun ShowReadBook(book: Book?, onComplete: () -> Unit) {
     val listState = rememberLazyListState()
 
     //state of reader
+
     val isAtEnd by remember {
         derivedStateOf {
             val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()
@@ -76,22 +101,18 @@ fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
             lastVisibleItem != null && lastVisibleItem.index == totalItems - 1
         }
     }
+
+
+
+    val contentHeight = remember { mutableStateOf(0) }
+
+
     //progress data
     val progress by remember {
         derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val viewportHeight = layoutInfo.viewportSize.height
-            val lastItem = layoutInfo.visibleItemsInfo.lastOrNull()
-            val totalContentHeight = layoutInfo.totalItemsCount * (lastItem?.size ?: 0)
-
-            val scrolledPx = listState.firstVisibleItemIndex * (lastItem?.size ?: 0) +
-                    listState.firstVisibleItemScrollOffset
-
-            if (totalContentHeight != 0) {
-                (scrolledPx.toFloat() / (totalContentHeight - viewportHeight)).coerceIn(0f, 1f)
-            } else {
-                0f
-            }
+            val offset = listState.firstVisibleItemScrollOffset
+            val maxScroll = (contentHeight.value - listState.layoutInfo.viewportSize.height).coerceAtLeast(1)
+            (offset.toFloat() / maxScroll).coerceIn(0f, 1f)
         }
     }
 
@@ -105,12 +126,12 @@ fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(250.dp)
+                    .height(275.dp)
                     .align(Alignment.TopCenter)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFF4EB1CB),
+                                Color(0xFF4EB1CB).copy(alpha = 1f),
                                 Color(0xFF4EB1CB).copy(alpha = 0f)
                             )
                         )
@@ -119,7 +140,7 @@ fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
             ) {
                 Column{
                     Text(
-                        text = book.title,
+                        text = book?.title?: "",
                         style = MaterialTheme.typography.headlineMedium,
                         color = Color.Black,
                         modifier = Modifier.fillMaxWidth(),
@@ -134,6 +155,7 @@ fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
                             .height(8.dp)
                             .clip(RoundedCornerShape(8.dp)),
                         color = Color.Green,
+                        trackColor = Color.White
                     )
                 }
             }
@@ -142,20 +164,28 @@ fun ShowReadBook(book: Book, onComplete: () -> Unit, onBack: () -> Unit) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
-                    .padding(top = 220.dp, bottom = 20.dp, start = 10.dp, end = 10.dp)
+                    .padding(top = 175.dp, bottom = 20.dp, start = 10.dp, end = 10.dp)
                     .clip(RoundedCornerShape(40.dp))
                     .background(Color.Transparent)
                     .padding(20.dp)
                     .fillMaxSize()
             ) {
                 item {
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+                //texto de lectura
+                item {
                     Text(
-                        text = book.content ?: "",
+                        text = book?.content ?: "",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Black
+                        color = Color.Black,
+                        modifier = Modifier.onGloballyPositioned {
+                            contentHeight.value = it.size.height
+                        }
                     )
 
                 }
+                //espacio para que las ultimas palabras del texto no queden hasta abajo
                 item {
                     Spacer(modifier = Modifier.height(100.dp))
                 }
