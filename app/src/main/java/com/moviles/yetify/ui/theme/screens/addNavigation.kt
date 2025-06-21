@@ -1,4 +1,3 @@
-
 package com.moviles.yetify.ui.theme.screens
 
 import androidx.compose.runtime.Composable
@@ -21,5 +20,6 @@ fun AppNavigation() {
         composable("taskList") { TaskListScreen(navController) }
         composable("addTask") { AddTaskScreen(navController) }
         composable("calendar") { CalendarScreen(navController) }
+        composable("progress") { ProgressScreen(navController) }
     }
 }

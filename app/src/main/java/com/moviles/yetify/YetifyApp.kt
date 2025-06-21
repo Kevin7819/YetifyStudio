@@ -153,7 +153,7 @@ fun YetifyApp() {
         composable("main") {
             HomeScreen(
                 onActivitiesClick = { /* TODO: Navigate to activities screen */ },
-                onProgressClick = { /* TODO: Navigate to progress screen */ },
+                onProgressClick = { navController.navigate("progress") },
                 onTasksClick = { navController.navigate("tasks") }, // Navigate to tasks screen
                 onReadingsClick = { /* TODO: Navigate to readings screen */ },
                 onLogout = {
@@ -169,6 +169,9 @@ fun YetifyApp() {
         // -------------------- Internal Task Navigation --------------------
         composable("tasks") {
             AppNavigation() // Load task-related internal navigation
+        }
+        composable("progress") { //
+            ProgressScreen(navController)
         }
     }
 }

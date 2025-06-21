@@ -22,15 +22,10 @@ class UserTaskViewModel (application: Application) : AndroidViewModel(applicatio
     private val _userTasks = MutableStateFlow<List<UserTask>>(emptyList())
     val userTasks: StateFlow<List<UserTask>> get() = _userTasks
 
-
-
     private val userPreferences = UserPreferences(application.applicationContext)
 
     private val _courses = MutableStateFlow<List<Course>>(emptyList())
     val courses: StateFlow<List<Course>> get() = _courses
-
-
-
 
     fun fetchCourses() {
         viewModelScope.launch {
@@ -58,6 +53,7 @@ class UserTaskViewModel (application: Application) : AndroidViewModel(applicatio
             try {
 
                 val userId = userPreferences.userId.firstOrNull()
+                Log.i("MyViewModel", "userId = $userId")
                 if (userId != null) {
 
                     _userTasks.value = RetrofitInstance.api.getUserTasksByUserId(userId)

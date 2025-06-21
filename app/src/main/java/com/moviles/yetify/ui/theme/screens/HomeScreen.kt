@@ -7,11 +7,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,35 +34,28 @@ fun HomeScreen(
     userPreferences: UserPreferences,
     modifier: Modifier = Modifier
 ) {
-    // State variables to control visibility of dialogs
     var showProfileDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
 
-    // Retrieve user data stored in DataStore (persisted values)
     val userName by userPreferences.userName.collectAsState(initial = "")
     val email by userPreferences.email.collectAsState(initial = "")
     val birthday by userPreferences.birthday.collectAsState(initial = "")
     val registrationDate by userPreferences.registrationDate.collectAsState(initial = "")
 
-    // Root container of the HomeScreen
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White) // White background for a clean and simple look
+            .background(Color.White)
     ) {
-        // Main vertical layout
         Column(modifier = Modifier.fillMaxSize()) {
-
-            // Top App Bar containing Profile and Settings buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFB3E5FC)) // Light blue background for header
+                    .background(Color(0xFFB3E5FC))
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Profile icon button on the left
                 IconButton(onClick = { showProfileDialog = true }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_profile),
@@ -69,7 +65,6 @@ fun HomeScreen(
                     )
                 }
 
-                // Settings icon button on the right
                 IconButton(onClick = { showSettingsDialog = true }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_settings),
@@ -80,7 +75,6 @@ fun HomeScreen(
                 }
             }
 
-            // Centered Yeti mascot image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -90,18 +84,16 @@ fun HomeScreen(
                 Image(
                     painter = painterResource(id = R.drawable.yeti_complete_smiling),
                     contentDescription = "Logo de Yetify",
-                    modifier = Modifier.size(250.dp) // Friendly mascot size
+                    modifier = Modifier.size(250.dp)
                 )
             }
 
-            // Grid of four action buttons (2 rows, 2 buttons per row)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // First row: Activities and Progress
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -110,7 +102,6 @@ fun HomeScreen(
                     HomeButton("Progreso", R.drawable.ic_progress, onProgressClick, Modifier.weight(1f))
                 }
 
-                // Second row: Tasks and Readings
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -120,10 +111,8 @@ fun HomeScreen(
                 }
             }
 
-            // Pushes the bottom box to the bottom of the screen
             Spacer(modifier = Modifier.weight(1f))
 
-            // Bottom decorative footer bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -132,34 +121,26 @@ fun HomeScreen(
             )
         }
 
-        // Animated Profile dialog displaying stored user info
+        // Nuevo ProfileDialog mejorado
         AnimatedVisibility(
             visible = showProfileDialog,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            AlertDialog(
-                onDismissRequest = { showProfileDialog = false },
-                confirmButton = {
-                    TextButton(onClick = { showProfileDialog = false }) {
-                        Text("¡Cerrar perfil!", fontWeight = FontWeight.Bold)
+            userName?.let {
+                email?.let { it1 ->
+                    birthday?.let { it2 ->
+                        ProfileDialog(
+                            userName = it,
+                            email = it1,
+                            birthday = it2,
+                            onDismiss = { showProfileDialog = false }
+                        )
                     }
-                },
-                // Title and body showing user information
-                title = { Text("Mi Perfil", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
-                text = {
-                    Column {
-                        Text("Nombre de usuario: $userName")
-                        Text("Correo: $email")
-                        Text("Cumpleaños: $birthday")
-                    }
-                },
-                // Dialog background color
-                containerColor = Color(0xFFE1F5FE)
-            )
+                }
+            }
         }
 
-        // Animated Settings dialog with logout confirmation
         AnimatedVisibility(
             visible = showSettingsDialog,
             enter = fadeIn(),
@@ -170,7 +151,7 @@ fun HomeScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         showSettingsDialog = false
-                        onLogout() // Triggers logout callback to parent
+                        onLogout()
                     }) {
                         Text("Cerrar sesión", color = Color.Red, fontWeight = FontWeight.Bold)
                     }
@@ -180,11 +161,122 @@ fun HomeScreen(
                         Text("Cancelar")
                     }
                 },
-                // Dialog title and confirmation message
                 title = { Text("Ajustes", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 text = { Text("¿Deseas cerrar sesión de tu cuenta?") },
-                // Dialog background color
                 containerColor = Color(0xFFFFF8E1)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileDialog(
+    userName: String,
+    email: String,
+    birthday: String,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = Color(0xFFE1F5FE),
+        title = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.AccountCircle,
+                    contentDescription = "Perfil",
+                    modifier = Modifier.size(48.dp),
+                    tint = Color(0xFF00796B)
+                )
+                Text(
+                    text = "Mi Perfil Yeti",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF00796B)
+                    ),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.padding(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ProfileInfoItem(
+                    icon = Icons.Default.Person,
+                    label = "Nombre Yeti",
+                    value = userName,
+                    iconColor = Color(0xFF0288D1)
+                )
+
+                ProfileInfoItem(
+                    icon = Icons.Default.Email,
+                    label = "Correo Yeti",
+                    value = email,
+                    iconColor = Color(0xFFD32F2F)
+                )
+
+                ProfileInfoItem(
+                    icon = Icons.Default.Cake,
+                    label = "Cumpleaños Yeti",
+                    value = birthday,
+                    iconColor = Color(0xFF7B1FA2)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4DB6AC),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("¡Listo!")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ProfileInfoItem(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    iconColor: Color
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = iconColor,
+            modifier = Modifier.size(28.dp)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = Color(0xFF616161)
+                ),
+                fontSize = 14.sp
+            )
+            Text(
+                text = value.ifEmpty { "No especificado" },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color(0xFF212121),
+                    fontWeight = FontWeight.Medium
+                ),
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }
@@ -197,17 +289,15 @@ fun HomeButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Reusable composable for main navigation buttons
     Button(
         onClick = onClick,
         modifier = modifier
             .padding(8.dp)
             .height(120.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4EB1CB)), // Themed blue
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4EB1CB)),
         shape = RoundedCornerShape(20.dp),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 8.dp)
     ) {
-        // Icon + Text stacked vertically
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 painter = painterResource(id = iconRes),
@@ -231,7 +321,6 @@ fun HomeButton(
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
-    // Preview function to render the HomeScreen in Android Studio
     val context = LocalContext.current
     val prefs = remember { UserPreferences(context) }
 

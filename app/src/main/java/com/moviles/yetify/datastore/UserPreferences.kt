@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.moviles.yetify.models.User
+import com.moviles.yetify.models.LoginResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
@@ -33,7 +33,7 @@ class UserPreferences(private val context: Context) {
     val registrationDate: Flow<String?> = context.dataStore.data.map { it[REGISTRATION_DATE] }
     val token: Flow<String?> = context.dataStore.data.map { it[TOKEN] }
 
-    suspend fun saveUser(user: User) {
+    suspend fun saveUser(user: LoginResponse) {
         context.dataStore.edit { prefs ->
             prefs[USER_ID] = user.id
             prefs[USER_NAME] = user.userName
