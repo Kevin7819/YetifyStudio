@@ -1,6 +1,7 @@
 package com.moviles.yetify.ui.theme.screens
 
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,11 +64,11 @@ import com.moviles.yetify.viewmodel.BookViewModel
 @Composable
 fun PreviewListBooks(){
     val bookList = listOf(
-        Book(id = 1, title = "Caperucita Roja", author = "Charles Perrault", content = null),
-        Book(id = 2, title = "¿A qué sabe la luna?", author = "Michael Grejniec", content = null),
-        Book(id = 3, title = "La oruga muy hambrienta", author = "Eric Carle", content = null),
-        Book(id = 4, title = "El monstruo de colores", author = "Anna Llenas", content = null),
-        Book(id = 5, title = "La pequeña oruga glotona", author = "Eric Carle", content = null)
+        Book(id = 1, title = "Caperucita Roja", author = "Charles Perrault", content = null, progress = 0.1),
+        Book(id = 2, title = "¿A qué sabe la luna?", author = "Michael Grejniec", content = null,progress = 0.10),
+        Book(id = 3, title = "La oruga muy hambrienta", author = "Eric Carle", content = null,progress = 0.14),
+        Book(id = 4, title = "El monstruo de colores", author = "Anna Llenas", content = null,progress = 0.32),
+        Book(id = 5, title = "La pequeña oruga glotona", author = "Eric Carle", content = null,progress = 1.0)
     )
     ShowListBooks(listBook = bookList, onClickBook = {}, onClickSearch = {})
 }
@@ -79,6 +80,7 @@ fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit){
     val listbook by bookviewmodel.listBooks.collectAsState()
 
     LaunchedEffect(Unit) {
+
         bookviewmodel.fetchAllBooks()
     }
     ShowListBooks(
@@ -88,6 +90,7 @@ fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit){
             bookviewmodel.getSearchBook(search)
         }
     )
+    Log.i("listScreen ","$listbook")
     ShowTopBar(onClickBack = onClickBack,13)
 }
 
@@ -126,14 +129,14 @@ fun ShowTopBar(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = iconAndTextColor,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(30.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Volver",
                     color = iconAndTextColor,
-                    fontSize = 15.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -173,7 +176,7 @@ fun ShowListBooks(listBook: List<Book>, onClickSearch: (String) -> Unit, onClick
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF4EB1CB))
-            .padding(10.dp),
+            .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         //box to title of view
@@ -330,7 +333,7 @@ fun BookCard(book: Book, onClickBook:(Book)->Unit) {
                     modifier = Modifier.fillMaxWidth().weight(2f)
                 ){
                     LinearProgressIndicator(
-                        progress = { 0.34f },
+                        progress = { book.progress.toFloat() },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)

@@ -4,5 +4,6 @@ data class Book(
     val id:Int,
     val title:String,
     val author:String,
-    val content:String?
+    val content:String?,
+    val progress: Double
 )
