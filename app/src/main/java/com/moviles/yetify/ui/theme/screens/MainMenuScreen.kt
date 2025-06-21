@@ -136,7 +136,12 @@ fun MainMenuScreen(navController: NavController) {
                     text = "Volver",
                     icon = Icons.Default.ArrowBack,
                     iconPositionMain = IconPositionMain.LEFT,
-                    onClick = { navController.popBackStack() }
+                    onClick = {
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
         }
