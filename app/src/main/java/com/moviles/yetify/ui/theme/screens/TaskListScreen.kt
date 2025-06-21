@@ -1,4 +1,3 @@
-
 package com.moviles.yetify.ui.theme.screens
 
 import android.icu.text.SimpleDateFormat
@@ -24,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.moviles.yetify.models.UserTask
+import com.moviles.yetify.models.Course
 import com.moviles.yetify.viewmodel.UserTaskViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.background
@@ -41,18 +41,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.modifier.modifierLocalOf
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,59 +57,77 @@ import com.moviles.yetify.ui.theme.YetifyTheme
 import java.sql.Date
 import java.util.Locale
 
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextFieldColors
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.navigation.compose.rememberNavController
 
-
-
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
-
-import androidx.compose.ui.platform.LocalDensity
-import kotlin.math.PI
-import kotlin.math.sin
 import kotlin.math.cos
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskListScreen(navController: NavController) {
+    // Gets the ViewModel using the viewModel() function
     val viewModel: UserTaskViewModel = viewModel()
+    // Collects the status of user tasks as a State
     val userTasks by viewModel.userTasks.collectAsState()
+    // Collect the status of the courses as a State.
+    val courses by viewModel.courses.collectAsState()
 
-    var showDialog   by remember { mutableStateOf(false) }
+    var selectedFilter by remember { mutableStateOf("Todas") }
+    var selectedCourse by remember { mutableStateOf<Course?>(null) }
+    var courseExpanded by remember { mutableStateOf(false) }
+    // Available options for filtering
+    val filterOptions = listOf("Todas", "Pendientes", "Completadas", "No hechas", "En progreso")
+    var filterExpanded by remember { mutableStateOf(false) }
+
+    var showDialog by remember { mutableStateOf(false) }
     var taskSelected by remember { mutableStateOf<UserTask?>(null) }
     val screenWidth = LocalConfiguration.current.screenWidthDp.dp
-    val snowflakes  = remember { List(15) { createSnowflaketask(screenWidth.value) } }
+    val snowflakes = remember { List(15) { createSnowflaketask(screenWidth.value) } }
 
-
-    LaunchedEffect(Unit) {
-        viewModel.fetchUserTasks()
+    // Processes the tasks to mark the overdue ones
+    val processedTasks = remember(userTasks) {
+        userTasks.map { task ->
+            if ((task.status.equals("Pendiente", ignoreCase = true) ||
+                        task.status.equals("En progreso", ignoreCase = true)) &&
+                isTaskOverdue(task.dueDate)) {
+                task.copy(status = "No hecha")
+            } else {
+                task
+            }
+        }
     }
 
+    // Filter the tasks according to the selected criteria
+    val filteredTasks = remember(processedTasks, selectedFilter, selectedCourse) {
+        var filtered = filterTasks(processedTasks, selectedFilter)
 
+        if (selectedCourse != null) {
+            filtered = filtered.filter { it.idCourse == selectedCourse?.id }
+        }
+
+        filtered.also { filtered ->
+            Log.d("TaskFilter", "Filtro: $selectedFilter, Curso: ${selectedCourse?.nameCourse}, Tareas mostradas: ${filtered.size}")
+        }
+    }
+
+    // Effect to load initial data when starting the screen
+    LaunchedEffect(Unit) {
+        viewModel.fetchUserTasks()
+        viewModel.fetchCourses()
+    }
+
+    // Effect to update tasks when dialog is closed
     LaunchedEffect(showDialog) {
         if (!showDialog) {
             viewModel.fetchUserTasks()
@@ -125,7 +139,6 @@ fun TaskListScreen(navController: NavController) {
             .fillMaxSize()
             .background(Color.White)
     ) {
-
         CloudBackground()
         Box(
             modifier = Modifier
@@ -138,12 +151,11 @@ fun TaskListScreen(navController: NavController) {
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .background(Color(0xFF59C0EF).copy(alpha = 0.9f)),
+                    .background(Color(0xFF4EB1CB).copy(alpha = 0.9f)),
                 contentAlignment = Alignment.Center
             ) {
                 Row(
@@ -166,6 +178,106 @@ fun TaskListScreen(navController: NavController) {
                 }
             }
 
+            // ComboBox to select course
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                // Drop-down menu for courses
+                ExposedDropdownMenuBox(
+                    expanded = courseExpanded,
+                    onExpandedChange = { courseExpanded = !courseExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedCourse?.nameCourse ?: "Todos los cursos",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Filtrar por curso:") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(courseExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF4EB1CB),
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = courseExpanded,
+                        onDismissRequest = { courseExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Todos los cursos") },
+                            onClick = {
+                                selectedCourse = null // Reset selection
+                                courseExpanded = false
+                            }
+                        )
+
+                        courses.forEach { course ->
+                            DropdownMenuItem(
+                                text = { Text(course.nameCourse) },
+                                onClick = {
+                                    selectedCourse = course
+                                    courseExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // ComboBox to select status filter
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            ) {
+                ExposedDropdownMenuBox(
+                    expanded = filterExpanded,
+                    onExpandedChange = { filterExpanded = !filterExpanded }
+                ) {
+                    OutlinedTextField(
+                        value = selectedFilter,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Mostrar tareas por estado:") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(filterExpanded) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFF4EB1CB),
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+
+                    ExposedDropdownMenu(
+                        expanded = filterExpanded,
+                        onDismissRequest = { filterExpanded = false }
+                    ) {
+                        filterOptions.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    selectedFilter = option
+                                    filterExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -195,25 +307,29 @@ fun TaskListScreen(navController: NavController) {
                         modifier = Modifier.width(80.dp))
                 }
 
-
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(userTasks) { task ->
+                    items(filteredTasks) { task ->
+                        val isOverdue = isTaskOverdue(task.dueDate) &&
+                                !task.status.equals("Completada", ignoreCase = true)
+
                         TaskItem(
                             task = task,
-                            onDelete = { viewModel.deleteUserTask(it) },
+                            onDelete = { if (!isOverdue) viewModel.deleteUserTask(it) },
                             onEdit = {
-                                taskSelected = task
-                                showDialog   = true
-                            }
+                                if (!isOverdue) {
+                                    taskSelected = task
+                                    showDialog = true
+                                }
+                            },
+                            isOverdue = isOverdue
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-
 
                 CustomIconButton(
                     text = "Volver",
@@ -224,22 +340,21 @@ fun TaskListScreen(navController: NavController) {
             }
         }
 
-
         if (showDialog) {
             DialogEditTaskUser(
                 task = taskSelected,
                 onConfirm = { updatedTask ->
                     viewModel.updateUserTask(updatedTask)
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 },
                 onDismiss = {
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 },
                 onDelete = { id ->
                     viewModel.deleteUserTask(id)
-                    showDialog   = false
+                    showDialog = false
                     taskSelected = null
                 }
             )
@@ -247,7 +362,30 @@ fun TaskListScreen(navController: NavController) {
     }
 }
 
+// Check if a task is overdue by comparing its due date with the current one.
+//Boolean true if task is overdue, false otherwise
+fun isTaskOverdue(dueDate: String?): Boolean {
+    if (dueDate.isNullOrEmpty()) return false
+    return try {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val dueDateObj = dateFormat.parse(dueDate)
+        val currentDate = Date(System.currentTimeMillis())
+        dueDateObj.before(currentDate)
+    } catch (e: Exception) {
+        false
+    }
+}
 
+//Filters a list of tasks according to the selected status.
+fun filterTasks(tasks: List<UserTask>, filter: String): List<UserTask> {
+    return when (filter) {
+        "Pendientes" -> tasks.filter { it.status.equals("Pendiente", ignoreCase = true) }
+        "Completadas" -> tasks.filter { it.status.equals("Completada", ignoreCase = true) }
+        "No hechas" -> tasks.filter { it.status.equals("No hecha", ignoreCase = true) }
+        "En progreso" -> tasks.filter { it.status.equals("En progreso", ignoreCase = true) }
+        else -> tasks // "Todas"
+    }
+}
 
 
 @Composable
@@ -329,7 +467,7 @@ fun CloudBackground() {
     val density = LocalDensity.current
     Canvas(modifier = Modifier.fillMaxSize()) {
         with(density) {
-            val cloudColor = Color(0xFF59C0EF)
+            val cloudColor = Color(0xFF4EB1CB)
             val cloudRadius = 50.dp.toPx()
             val height = size.height
             val width = size.width
@@ -399,7 +537,7 @@ fun CustomIconButton(
             .height(60.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF59C0EF),
+            containerColor = Color(0xFF4EB1CB),
             contentColor = Color.White
         ),
         elevation = ButtonDefaults.buttonElevation(
@@ -440,36 +578,20 @@ fun CustomIconButton(
     }
 }
 
-
+// Component representing an individual task item
 @Composable
-fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
-
-    val isOverdue = remember {
-        if (task.dueDate.isNullOrEmpty()) false
-        else {
-            try {
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val dueDate = dateFormat.parse(task.dueDate)
-                val currentDate = System.currentTimeMillis()
-                dueDate != null &&
-                        dueDate.time < currentDate &&
-                        !task.status.equals("Completada", ignoreCase = true)
-            } catch (e: Exception) {
-                false
-            }
-        }
-    }
-
-
+fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit, isOverdue: Boolean) {
+    // Row containing all the information of the task
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(25.dp))
-            .background(Color(0xFF2AACF3))
+            .background(Color(0xFF4EB1CB))
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
+        // Text with the task descriptionHaz clic para usar esta alternativa
         Text(
             text = task.description,
             color = Color.White,
@@ -477,8 +599,7 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
             fontWeight = FontWeight.Medium,
             modifier = Modifier.weight(1f)
         )
-
-
+        // Visual status indicator
         Box(
             modifier = Modifier
                 .size(40.dp)
@@ -509,24 +630,26 @@ fun TaskItem(task: UserTask, onDelete: (Int) -> Unit, onEdit: () -> Unit) {
                 else ->
                     Icon(
                         imageVector = Icons.Default.AvTimer,
-                        contentDescription = "En proceso",
+                        contentDescription = "En progreso",
                         tint = Color.White
                     )
             }
         }
 
         Spacer(modifier = Modifier.width(16.dp))
+
         IconButton(
             onClick = onEdit,
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(Color.White)
+                .background(if (isOverdue) Color.Gray else Color.White),
+            enabled = !isOverdue
         ) {
             Icon(
                 imageVector = Icons.Default.Edit,
                 contentDescription = "Editar",
-                tint = Color(0xFF2AACF3)
+                tint = if (isOverdue) Color.LightGray else Color(0xFF4EB1CB)
             )
         }
     }
@@ -773,3 +896,7 @@ fun DialogEditTaskUser(
 fun TaskListScreenPreview() {
     TaskListScreen(navController = rememberNavController())
 }
+
+
+
+

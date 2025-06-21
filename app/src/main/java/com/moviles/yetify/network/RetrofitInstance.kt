@@ -1,11 +1,11 @@
 package com.moviles.yetify.network
 
 import android.app.Application
+import com.google.gson.GsonBuilder
 import com.moviles.yetify.common.Constants.API_BASE_URL
 import com.moviles.yetify.datastore.UserPreferences
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -41,13 +41,27 @@ object RetrofitInstance {
             .build()
     }
 
-    // Retrofit instance that uses the interceptor
+    // Retrofit instance that uses the interceptor and custom Gson for date handling
     val api: ApiService by lazy {
+        val gson = GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
+            .create()
+
         Retrofit.Builder()
             .baseUrl(API_BASE_URL)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
             .create(ApiService::class.java)
     }
+
+    val triviaApi: TriviaApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://opentdb.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TriviaApiService::class.java)
+    }
+
 }
+

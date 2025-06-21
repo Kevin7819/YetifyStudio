@@ -19,126 +19,206 @@ import retrofit2.HttpException
 /**
  * ViewModel responsible for handling all authentication-related operations:
  * - Login
+ * - Register
  * - Forgot Password (send code)
  * - Reset Password (using code)
  * - Logout
  *
- * It uses Retrofit for API requests and StateFlows to manage UI state.
+ * Uses Retrofit for API requests and StateFlows to manage UI state reactively.
  */
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    // State for login result
+    // MutableStateFlow to emit login result states (Idle, Loading, Success, Error)
     private val _loginResult = MutableStateFlow<LoginResult>(LoginResult.Idle)
     val loginResult: StateFlow<LoginResult> = _loginResult
 
-    // General loading flag
+    // MutableStateFlow to indicate loading status (true when loading)
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    // Tracks if user is authenticated
+    // Compose state to track if user is authenticated
     var isAuthenticated by mutableStateOf(false)
         private set
 
-    // Holds current logged-in user's ID
+    // Store the current logged-in user's ID
     var userId: Int? = null
 
-    // Shared preferences instance for storing user data
+    // Instance of UserPreferences for persistent user data storage (ID, token)
     private val prefs = UserPreferences(application.applicationContext)
 
     init {
-        // Initialize Retrofit with the application context (for interceptor setup)
+        // Initialize Retrofit instance with the Application context
         RetrofitInstance.init(application)
     }
 
     /**
-     * Represents the login result states for UI to observe.
+     * Sealed class to represent different login result states
+     * for UI to observe and react accordingly.
      */
     sealed class LoginResult {
-        object Idle : LoginResult()
-        object Loading : LoginResult()
-        data class Success(val response: LoginResponse) : LoginResult()
-        data class Error(val message: String) : LoginResult()
+        object Idle : LoginResult()             // No login attempt yet
+        object Loading : LoginResult()          // Login request in progress
+        data class Success(val response: LoginResponse) : LoginResult()  // Login successful with user data
+        data class Error(val message: String) : LoginResult()            // Login failed with error message
     }
 
     /**
-     * Attempts to authenticate the user using given credentials.
+     * Performs login by calling the backend API with username and password.
+     * Updates UI state based on response success or failure.
      */
     fun login(userName: String, password: String) {
         viewModelScope.launch {
-            _loginResult.value = LoginResult.Loading
+            _loginResult.value = LoginResult.Loading  // Notify UI that login started
             _isLoading.value = true
 
             try {
+                // API call to login endpoint
                 val response = RetrofitInstance.api.login(LoginRequest(userName, password))
 
                 if (response.isSuccessful) {
-                    response.body()?.let { apiResponse: LoginApiResponse ->
+                    Log.i("AuthViewModel", "Successful response")
+                    response.body()?.let { apiResponse ->
                         val user = apiResponse.user
 
                         userId = user.id
                         isAuthenticated = true
 
-                        // Store user ID and token in preferences
-                        prefs.saveUser(user.id, user.token)
                         _loginResult.value = LoginResult.Success(user)
+                        prefs.saveToken(user.token)
 
-                        // Log for debugging
+                        // Guarda el usuario correctamente
+                        prefs.saveUser(user)
+
+                        // Debug logs for verification
                         Log.i("AuthViewModel", "Saved user id: ${prefs.userId.first()}")
+                        Log.i("AuthViewModel", "Saved username: ${prefs.userName.first()}")
                         Log.i("AuthViewModel", "Saved token: ${prefs.token.first()}")
                         Log.i("AuthViewModel", "Login success. User: $user")
                     } ?: run {
+                        // Response body was null
                         _loginResult.value = LoginResult.Error("Empty response body")
                         Log.e("AuthViewModel", "Empty response body")
                     }
                 } else {
+                    // Handle HTTP error responses
                     val errorBody = response.errorBody()?.string() ?: "Unknown error"
                     _loginResult.value = LoginResult.Error("Login failed: $errorBody")
                     Log.e("AuthViewModel", "Login failed: $errorBody")
                 }
 
             } catch (e: HttpException) {
+                // HTTP protocol error
                 val errorMsg = "HTTP Error: ${e.message()}, Body: ${e.response()?.errorBody()?.string()}"
                 _loginResult.value = LoginResult.Error(errorMsg)
                 Log.e("AuthViewModel", errorMsg)
             } catch (e: Exception) {
+                // Other exceptions such as network failures
                 val errorMsg = "Error: ${e.message ?: "Unknown error"}"
                 _loginResult.value = LoginResult.Error(errorMsg)
                 Log.e("AuthViewModel", errorMsg, e)
             } finally {
+                // Loading finished regardless of success or failure
                 _isLoading.value = false
             }
         }
     }
 
-    // -------------------- Forgot / Reset Password Logic --------------------
+    // -------------------- REGISTER --------------------
 
+    // StateFlow to hold result message or success state for registration operation
+    private val _registerResult = MutableStateFlow<String?>(null)
+    val registerResult: StateFlow<String?> get() = _registerResult
+
+    /**
+     * Calls the backend API to register a new user.
+     * Emits success or error message to update UI accordingly.
+     */
+    fun register(userName: String, email: String, password: String, birthday: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val request = RegisterRequest(
+                    userName = userName.trim(),
+                    email = email.trim(),
+                    password = password,
+                    birthday = birthday // Format: "yyyy-MM-dd"
+                )
+                val response = RetrofitInstance.api.register(request)
+
+                if (response.isSuccessful && response.body()?.isSuccess == true) {
+                    _registerResult.value = "success"
+                    Log.i("AuthViewModel", "Registration successful")
+                } else {
+                    // Obtener mensaje del servidor si lo hay
+                    val serverMessage = response.body()?.message
+
+                    // Intentar leer el cuerpo de error si el mensaje no está
+                    val errorBody = response.errorBody()?.string()
+
+                    val errorMsg = when {
+                        !serverMessage.isNullOrBlank() -> "Registro fallido: $serverMessage"
+                        !errorBody.isNullOrBlank() -> "Registro fallido. Detalles: $errorBody"
+                        else -> "Registro fallido: Error desconocido (código ${response.code()})"
+                    }
+
+                    _registerResult.value = errorMsg
+                    Log.e("AuthViewModel", errorMsg)
+                }
+
+            } catch (e: HttpException) {
+                // Error HTTP (como 400, 500, etc.)
+                val errorText = e.response()?.errorBody()?.string()
+                val msg = "Error HTTP ${e.code()}: ${e.message()}. Detalles: ${errorText ?: "sin detalles"}"
+                _registerResult.value = msg
+                Log.e("AuthViewModel", msg, e)
+
+            } catch (e: Exception) {
+                // Errores de red, tiempo de espera, parsing, etc.
+                val msg = "Error inesperado: ${e.message ?: "desconocido"}"
+                _registerResult.value = msg
+                Log.e("AuthViewModel", msg, e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    /**
+     * Clears the current registration result to avoid displaying outdated messages.
+     */
+    fun clearRegisterResult() {
+        _registerResult.value = null
+    }
+
+    // -------------------- FORGOT / RESET PASSWORD --------------------
+
+    // StateFlow to indicate if "send forgot password code" API call is in progress
     private val _isSendingCode = MutableStateFlow(false)
     val isSendingCode: StateFlow<Boolean> get() = _isSendingCode
 
+    // StateFlow to indicate if "reset password" API call is in progress
     private val _isResettingPassword = MutableStateFlow(false)
     val isResettingPassword: StateFlow<Boolean> get() = _isResettingPassword
 
+    // StateFlow to hold result message or success state for forgot password operation
     private val _forgotPasswordResult = MutableStateFlow<String?>(null)
     val forgotPasswordResult: StateFlow<String?> get() = _forgotPasswordResult
 
+    // StateFlow to hold result message or success state for reset password operation
     private val _resetPasswordResult = MutableStateFlow<String?>(null)
     val resetPasswordResult: StateFlow<String?> get() = _resetPasswordResult
 
     /**
-     * Sends a password reset code to the user's email.
+     * Sends a password reset code to the given email.
+     * Updates the UI state with success or failure message.
      */
     fun sendForgotPassword(email: String) {
         viewModelScope.launch {
-            _isSendingCode.value = true
+            _isSendingCode.value = true  // Indicate sending process started
             try {
                 val response = RetrofitInstance.api.forgotPassword(ForgotPasswordRequest(email))
-
-                if (response.isSuccessful && response.body()?.isSuccess == true) {
-                    _forgotPasswordResult.value = "success"
-                } else {
-                    _forgotPasswordResult.value = response.body()?.message ?: "Failed to send code"
-                }
-
+                _forgotPasswordResult.value =
+                    if (response.isSuccessful && response.body()?.isSuccess == true) "success"
+                    else response.body()?.message ?: "Failed to send code"
             } catch (e: Exception) {
                 _forgotPasswordResult.value = "Error: ${e.message}"
             } finally {
@@ -148,63 +228,40 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Attempts to reset the password using a code sent to the user's email.
-     * Sends a ResetPasswordRequest to the backend and updates UI state accordingly.
+     * Sends a request to reset the user's password using the provided code.
+     * Emits a result message for the UI to react to.
      */
     fun resetPassword(email: String, code: String, newPassword: String, confirmPassword: String) {
         viewModelScope.launch {
             _isResettingPassword.value = true
-            Log.i("AuthViewModel", "Starting password reset for email: $email")
-
             try {
-                val request = ResetPasswordRequest(
-                    email = email.trim(),
-                    code = code.trim(),
-                    newPassword = newPassword,
-                    confirmPassword = confirmPassword
-                )
-
-                Log.i("AuthViewModel", "Sending resetPassword request: $request")
+                val request = ResetPasswordRequest(email, code, newPassword, confirmPassword)
                 val response = RetrofitInstance.api.resetPassword(request)
 
-                val responseBody = response.body()
-
-                if (response.isSuccessful && responseBody != null) {
-                    if (responseBody.isSuccess) {
-                        _resetPasswordResult.value = "success"
-                        Log.i("AuthViewModel", "Password reset successful for email: $email")
-                    } else {
-                        val message = responseBody.message ?: "Unknown server error"
-                        _resetPasswordResult.value = message
-                        Log.e("AuthViewModel", "Password reset failed (logical error): $message")
-                    }
-                } else {
-                    val errorBody = response.errorBody()?.string()
-                    val message = errorBody ?: "Unexpected error while resetting password"
-                    _resetPasswordResult.value = message
-                    Log.e("AuthViewModel", "Password reset failed (HTTP error). Code: ${response.code()}, Body: $errorBody")
-                }
+                val body = response.body()
+                _resetPasswordResult.value =
+                    if (response.isSuccessful && body?.isSuccess == true) "success"
+                    else body?.message ?: "Unexpected error while resetting password"
 
             } catch (e: Exception) {
-                val errorMsg = "Exception during password reset: ${e.message ?: "Unknown error"}"
-                _resetPasswordResult.value = "Error: $errorMsg"
-                Log.e("AuthViewModel", errorMsg, e)
+                _resetPasswordResult.value = "Error: ${e.message}"
             } finally {
                 _isResettingPassword.value = false
-                Log.i("AuthViewModel", "Finished resetPassword(). isResettingPassword=false")
             }
         }
     }
 
     /**
-     * Clears the reset password result to prevent repeated navigation or message.
+     * Clears the current reset password result to prevent outdated messages from persisting.
      */
     fun clearResetPasswordState() {
         _resetPasswordResult.value = null
     }
 
+    // -------------------- LOGOUT --------------------
+
     /**
-     * Logs out the current user and clears saved data.
+     * Logs the user out by clearing the stored credentials and resetting the state.
      */
     fun logout() {
         isAuthenticated = false

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1083855970117",
+    "project_id": "yetiy-7ccc0",
+    "storage_bucket": "yetiy-7ccc0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1083855970117:android:6634764d2b509bdbc9282c",
+        "android_client_info": {
+          "package_name": "com.moviles.yetify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBktzAG2NRKAu6nVqyxquEA1SIiMu7blRg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
