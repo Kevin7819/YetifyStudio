@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -20,21 +23,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.moviles.yetify.R
 import com.moviles.yetify.viewmodel.AuthViewModel
 
-/**
- * Composable function that displays the login screen and handles authentication flow.
- *
- * @param navController NavController for navigation between screens
- * @param onLoginSuccess Callback invoked when login is successful
- * @param onForgotPasswordClick Callback invoked when "Forgot password" is clicked
- * @param viewModel The AuthViewModel that handles authentication logic
- */
 @Composable
 fun LoginScreen(
     navController: NavController,
     onLoginSuccess: () -> Unit,
     onForgotPasswordClick: () -> Unit,
+    onCreateAccountClick: () -> Unit,
     viewModel: AuthViewModel = viewModel()
 ) {
     var userName by remember { mutableStateOf("") }
@@ -63,17 +60,25 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Imagen Yeti
+                Image(
+                    painter = painterResource(id = R.drawable.yeti_surprised),
+                    contentDescription = "Yeti sorprendido",
+                    modifier = Modifier
+                        .size(120.dp)
+                        .padding(bottom = 8.dp)
+                )
                 Text(
                     "Bienvenido",
-                    color = Color(0xFF38B6FF),
+                    color = Color(0xFF4EB1CB),
                     fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.headlineLarge
+                    fontSize = 32.sp
                 )
                 Text(
                     "Inicia sesión para continuar",
-                    color = Color(0xFF38B6FF),
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.headlineLarge
+                    color = Color(0xFF4EB1CB),
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 18.sp
                 )
             }
 
@@ -167,9 +172,10 @@ fun LoginScreen(
                         "¿Olvidaste tu contraseña?",
                         color = Color.White,
                         fontSize = 16.sp,
-                        modifier = Modifier.clickable {
-                            onForgotPasswordClick()
-                        }
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.End)
+                            .clickable { onForgotPasswordClick() }
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -188,9 +194,9 @@ fun LoginScreen(
                         onClick = { viewModel.login(userName, password) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(60.dp),
+                            .height(54.dp),
                         enabled = userName.isNotBlank() && password.isNotBlank() && !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF38B6FF)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4EB1CB)),
                         shape = RoundedCornerShape(50)
                     ) {
                         if (isLoading) {
@@ -199,35 +205,35 @@ fun LoginScreen(
                             Text(
                                 "INICIAR SESIÓN",
                                 color = Color.White,
-                                style = MaterialTheme.typography.labelLarge
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
                             )
                         }
                     }
-                }
-            }
 
-            // Section for sign up prompt
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    "¿No tienes una cuenta?",
-                    color = Color(0xFF38B6FF),
-                    fontSize = 16.sp
-                )
-                Text(
-                    "Regístrate",
-                    color = Color(0xFF38B6FF),
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clickable {
-                            // TODO: Navegar a pantalla de registro
-                        }
-                        .padding(top = 8.dp)
-                )
+                    Spacer(modifier = Modifier.height(26.dp))
+
+                    // Botón para crear cuenta (registro)
+                    Button(
+                        onClick = onCreateAccountClick,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(2.dp, Color(0xFF4EB1CB)),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                    ) {
+                        Text(
+                            text = "Crear cuenta",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4EB1CB),
+                            fontSize = 20.sp
+                        )
+                    }
+                }
             }
         }
     }
