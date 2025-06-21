@@ -93,8 +93,8 @@ fun PreviewReaderBook(){
 }
 
 @Composable
-fun  ScreenBookReader(id:Int,onClickBack:()->Unit){
-    val bookviewmodel: BookViewModel = viewModel()
+fun  ScreenBookReader(id:Int,onClickBack:()->Unit,bookviewmodel: BookViewModel, onComplete: (Book?) -> Unit){
+    //val bookviewmodel: BookViewModel = viewModel()
     val book by bookviewmodel.book.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
@@ -102,16 +102,17 @@ fun  ScreenBookReader(id:Int,onClickBack:()->Unit){
         bookviewmodel.getBookById(id)
     }
 
-    ShowTopBar(onClickBack = onClickBack,12)
-    ShowReadBook(book, onComplete = {}, updatingProgress = {bookId, progress->
+    ShowReadBook(book, onComplete = {book->
+        onComplete (book) }, updatingProgress = {bookId, progress->
         coroutineScope.launch {
             bookviewmodel.updateBookProgress(bookId, progress)
         }
     })
+    ShowTopBar(onClickBack = onClickBack,12)
 }
 
 @Composable
-fun ShowReadBook(book: Book?, onComplete: () -> Unit, updatingProgress: (Int,Double) -> Unit) {
+fun ShowReadBook(book: Book?, onComplete: (Book?) -> Unit, updatingProgress: (Int,Double) -> Unit) {
     val listState = rememberLazyListState()
 
     // state to initial progress
@@ -296,7 +297,7 @@ fun ShowReadBook(book: Book?, onComplete: () -> Unit, updatingProgress: (Int,Dou
                         if (book != null) {
                             updatingProgress(book.id,1.0)
                         }
-                        onComplete()
+                        onComplete(book)
                     },
                     modifier = Modifier
                         .fillMaxWidth()

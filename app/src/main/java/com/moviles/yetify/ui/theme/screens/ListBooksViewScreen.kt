@@ -58,6 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.moviles.yetify.viewmodel.BookViewModel
 
 @Preview(showSystemUi = true)
@@ -71,12 +72,14 @@ fun PreviewListBooks(){
         Book(id = 5, title = "La pequeña oruga glotona", author = "Eric Carle", content = null,progress = 1.0)
     )
     ShowListBooks(listBook = bookList, onClickBook = {}, onClickSearch = {})
+    ShowTopBar(onClickBack = {},1231)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit){
-    val bookviewmodel:BookViewModel = viewModel()
+fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit,bookviewmodel: BookViewModel){
+   //val bookviewmodel:BookViewModel = viewModel()
+
     val listbook by bookviewmodel.listBooks.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -90,7 +93,6 @@ fun ScreenListBooks(onClickBack: () -> Unit, onClickBook: (Book) -> Unit){
             bookviewmodel.getSearchBook(search)
         }
     )
-    Log.i("listScreen ","$listbook")
     ShowTopBar(onClickBack = onClickBack,13)
 }
 
@@ -129,14 +131,14 @@ fun ShowTopBar(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
                         tint = iconAndTextColor,
-                        modifier = Modifier.size(30.dp)
+                        modifier = Modifier.size(35.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Volver",
                     color = iconAndTextColor,
-                    fontSize = 10.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
