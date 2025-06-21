@@ -97,7 +97,7 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = userName,
                         onValueChange = { userName = it },
-                        label = { Text("Correo electrónico", color = Color.White) },
+                        label = { Text("Nombre de usuario", color = Color.White) },
                         leadingIcon = {
                             Icon(Icons.Default.Email, contentDescription = "Correo", tint = Color.White)
                         },

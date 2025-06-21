@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.moviles.yetify" />
+                  <option name="mobileSdkAppId" value="1:1083855970117:android:6634764d2b509bdbc9282c" />
+                  <option name="projectId" value="yetiy-7ccc0" />
+                  <option name="projectNumber" value="1083855970117" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />

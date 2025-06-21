@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-   // id("com.google.gms.google-services")
+    id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
 }
 
@@ -54,6 +54,15 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.room.common.jvm)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.protolite.well.known.types)
+
+
+    implementation(libs.firebase.messaging.ktx)
+    implementation("com.google.firebase:firebase-analytics")
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    implementation(libs.ads.mobile.sdk)
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -82,4 +91,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material:material-icons-extended")
+
+
+
+
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
 }
