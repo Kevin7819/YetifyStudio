@@ -170,7 +170,7 @@ fun ShowReadBook(book: Book?, onComplete: (Book?) -> Unit, updatingProgress: (In
     }
 
     LaunchedEffect(currentProgress) {
-        if (currentProgress.toDouble() >= lastProgress + 0.5) {
+        if (currentProgress.toDouble() >= lastProgress + 0.05) {
             book?.let {
                 updatingProgress(it.id, currentProgress.toDouble())
                 lastProgress = currentProgress.toDouble()

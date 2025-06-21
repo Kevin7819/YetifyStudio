@@ -170,7 +170,7 @@ fun YetifyApp() {
                 ScreenCompleteDialog(
                     onClickBack = {navController.navigate("readings")},
                     onClickHome = {navController.navigate("main")},
-                    onClickStats = {navController.navigate("main")},
+                    onClickStats = {navController.navigate("readings")},
                     onClickReset = {navController.navigate("detailScreen/${bookId}")}
                 )
             } ?: run {
