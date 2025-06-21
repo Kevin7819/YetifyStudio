@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-   // id("com.google.gms.google-services")
+    id("com.google.gms.google-services")
     id("com.google.devtools.ksp")
 }
 
@@ -91,4 +91,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
     implementation(platform(libs.androidx.compose.bom))
     implementation("androidx.compose.material:material-icons-extended")
+
+
+
+
+    implementation ("androidx.work:work-runtime-ktx:2.9.0")
+
 }
